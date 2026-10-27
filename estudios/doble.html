@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Infinito · estudio · tu doble</title>
+    <style>
+      html, body { margin: 0; background: #000; color: #ece7db; font-family: 'Geist Variable', system-ui, sans-serif; }
+      canvas#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+      #spacer { height: 700vh; }
+      .hud { position: fixed; left: 44px; bottom: 44px; max-width: 520px; pointer-events: none; text-shadow: 0 0 12px #000; }
+      .k { font: 500 11px 'Geist Mono Variable', monospace; letter-spacing: 0.16em; color: #c9b4ff; text-transform: uppercase; }
+      .t { font: italic 400 34px 'Instrument Serif', serif; margin: 8px 0 6px; }
+      .f { font-size: 15px; line-height: 1.45; opacity: 0.72; }
+      .cifra { position: fixed; right: 9vw; top: 18vh; text-align: right; pointer-events: none; }
+      .cifra b { display: block; font: 400 64px 'Instrument Serif', serif; color: #c9b4ff; }
+      .cifra sup { font-size: 0.42em; vertical-align: 1.1em; margin-left: 0.04em; }
+      .cifra span { font: 500 11px 'Geist Mono Variable', monospace; letter-spacing: 0.14em; opacity: 0.7; text-transform: uppercase; }
+      .maneras { position: fixed; top: 22px; right: 24px; display: flex; gap: 8px; }
+      .maneras button { all: unset; cursor: pointer; font: 500 12px 'Geist Variable', sans-serif; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(236,231,219,.25); opacity: .6; }
+      .maneras button.on { opacity: 1; border-color: #c9b4ff; color: #c9b4ff; }
+      .marca { position: fixed; top: 22px; left: 28px; font: 400 26px 'Instrument Serif', serif; }
+      .marca small { font: 500 11px 'Geist Mono Variable', monospace; letter-spacing: .16em; color: #c9b4ff; margin-left: 12px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <div id="spacer"></div>
+    <div class="marca">Infinito<small>ESTUDIO · TU DOBLE</small></div>
+    <nav class="maneras"><button data-s="1">1 · Retícula</button><button data-s="2">2 · Barajar</button><button data-s="3">3 · Torre</button></nav>
+    <div class="cifra"><b id="cifra"></b><span id="cifraT"></span></div>
+    <div class="hud"><div class="k" id="cap"></div><div class="t" id="tit"></div><div class="f" id="txt"></div></div>
+    <script type="module" src="./doble.ts"></script>
+  </body>
+</html>
