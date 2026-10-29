@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <a href="https://drayzu.github.io/Infinito/"><picture><source media="(prefers-color-scheme: dark)" srcset="media/enter-dark.svg"><img src="media/enter-light.svg" width="500" alt="Infinito, coming soon to drayzu.github.io/Infinito"></picture></a>
+  <a href="https://drayzu.github.io/Infinito/"><picture><source media="(prefers-color-scheme: dark)" srcset="media/enter-dark.svg"><img src="media/enter-light.svg" width="500" alt="Open drayzu.github.io/Infinito"></picture></a>
 </p>
 
 <br>
