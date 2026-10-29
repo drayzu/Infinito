@@ -22,7 +22,7 @@ const VERT = (pre: string, move: string, post = '') => /* glsl */ `
   attribute vec3 color;
   attribute vec3 aFrom;
   attribute float size, seed, aDelay, aKind, aInk;
-  uniform float uTime, uFocal, uMinPx, uMaxPx, uSizeUnit, uGain, uInk, uK, uSpread, uFog, uFogNear, uFuente;
+  uniform float uTime, uFocal, uMinPx, uMaxPx, uSizeUnit, uGain, uInk, uK, uSpread, uFog, uFogNear, uFuente, uFundido, uEscalaMundo;
   uniform vec4 uOcc;
   uniform float uBeta;
   uniform vec3 uVelV;
@@ -60,13 +60,13 @@ const VERT = (pre: string, move: string, post = '') => /* glsl */ `
     }
     ${post}
     float depth = max(-mv.z, 1e-14);
-    float s = sz * uSizeUnit * uFocal / depth;
+    float s = sz * uSizeUnit * uEscalaMundo * uFocal / depth;
     gl_PointSize = clamp(s, uMinPx, uMaxPx);
     // A light source keeps its brightness below a pixel; anything else dims by the area it lost.
     float dim = mix(min(1.0, (s * s) / (uMinPx * uMinPx)), 1.0, fuente);
     float fog = uFog > 0.0 ? exp(-max(depth - uFogNear, 0.0) / uFog) : 1.0;
-    vEm = em * uGain * dim * fog;
-    vOcc = clamp(occ * uInk * dim * fog, 0.0, 1.0);
+    vEm = em * uGain * dim * fog * uFundido;
+    vOcc = clamp(occ * uInk * dim * fog * uFundido, 0.0, 1.0);
     if (vEm.r + vEm.g + vEm.b + vOcc < 1e-4) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   }
 `;
@@ -126,6 +126,10 @@ export function materia(data: MateriaData, o: MateriaOpts = {}) {
     uFog: { value: 0 },
     uFogNear: { value: 0 },
     uFuente: { value: 0 },
+    /** The journey's crossfade between acts (the act itself never touches it). */
+    uFundido: { value: 1 },
+    /** The journey's scale of this act's world, when it is placed inside another (point sizes follow it). */
+    uEscalaMundo: { value: 1 },
     uOcc: { value: new THREE.Vector4(0, 0, 0, 0) },
     uBeta: { value: 0 },
     uVelV: { value: new THREE.Vector3(0, 0, -1) },

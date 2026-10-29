@@ -71,10 +71,13 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
         vida: ['Tu vida', 'Tu vida es un tramo de ese resorte: unas ochenta vueltas. Tu nacimiento en un extremo, tu muerte en el otro.'],
         todo: ['Todo a la vez', 'Y nada en las ecuaciones dice que solo exista el ahora. El tramo entero está ahí, de una vez: cada instante de tu vida, para siempre.'],
       };
-  tl.label('ahora').caption(viaje ? 3.4 : 2.4, T.ahora[0], T.ahora[1]);
+  tl.label('ahora').caption(viaje ? 4.6 : 2.4, T.ahora[0], T.ahora[1]);
   // In the journey it starts far, the Sun a light in the middle (act IV leaves it so), and comes in.
-  if (viaje) tl.to(1.4, { c0: 1, ahora: 0.15 });
-  tl.to(viaje ? 2.0 : 2.4, { ahora: 0.55 });
+  if (viaje) {
+    tl.wait(1.4);
+    tl.to(1.4, { c0: 1, ahora: 0.15 });
+  }
+  tl.to(viaje ? 1.8 : 2.4, { ahora: 0.55 });
   tl.label('direccion').caption(3.0, T.direccion[0], T.direccion[1]);
   tl.to(3.0, { ahora: 1.0, bq: 1, c1: 1 });
   tl.label('instante').caption(3.0, T.instante[0], T.instante[1]);
@@ -245,6 +248,8 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
   const tmp = V();
   return {
     tl,
+    entrada: { pos: V(0, -0.15 * PITCH, 0), escala: 1.6 },
+    salida: { pos: hel(3.9, 1), escala: 0.07 },
     cuenta: cuentaDe,
     rotulo(p): Rotulo | null {
       const c = tl.captionAt(p);

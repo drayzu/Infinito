@@ -35,6 +35,18 @@ for (let i = 0; i < args.length; i += 3) {
   // A way written «4v» is that way as the journey has it (GUION.md).
   const viaje = String(args[i + 1]).endsWith('v');
   const [m, s, n] = [args[i], parseInt(args[i + 1], 10), Number(args[i + 2])];
+  if (m === 'puentes') {
+    // Five frames round every change of act (just before, and through the relay), one row each.
+    await send('Page.navigate', { url: 'http://localhost:5203/index.html?debug&cap=1600x900' });
+    await sleep(6000);
+    const r = await send('Runtime.evaluate', {
+      awaitPromise: true,
+      returnByValue: true,
+      expression: `(async () => { await viaje.listo(); const t = viaje.tramos(); const b = []; for (const x of t.slice(1)) for (const d of [-0.25, 0.3, 0.8, 1.3, 2.2]) b.push(+(x[2] + d).toFixed(2)); await viaje.hoja('docs/viaje/puentes.jpg', b, 5, 320); return b.length; })()`,
+    });
+    console.log(`puentes: ${r.result?.result?.value ?? JSON.stringify(r.result?.exceptionDetails ?? r)}`);
+    continue;
+  }
   if (m === 'cuadro') {
     // One frame of the journey at beat s, full size, into docs/viaje/cuadro-<s>.jpg.
     await send('Page.navigate', { url: 'http://localhost:5203/index.html?debug&cap=1600x900' });

@@ -20,8 +20,18 @@ export interface Frame {
   camera: THREE.PerspectiveCamera;
 }
 
+/** Where an act hands over or takes over (journey): a point in its world and a size there. */
+export interface Ancla {
+  pos: THREE.Vector3;
+  escala: number;
+}
+
 export interface Instancia {
   tl: Timeline;
+  /** Journey: what this act starts from (it lands on the last act's `salida`). */
+  entrada?: Ancla;
+  /** Journey: what this act ends on (the next act's `entrada` lands here). */
+  salida?: Ancla;
   /** Places the camera and moves the world (before rendering). */
   update(f: Frame): void;
   /** Draws its share of the plate (notes, numbers on the film) on the 2D layer, in device pixels. */

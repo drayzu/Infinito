@@ -47,6 +47,16 @@ Diego lo aprobó: «Me encanta mucho. Por favor hazlo… Vamos a hacer arte». *
 
   Después vienen el ritmo de Destino, la lámina, el sonido, el idioma y el móvil.
 
+## Los relevos (28 de octubre de 2026, noche)
+
+Diego, sobre el paso del II al III: «estas transiciones hacen parecer que fueran módulos, que no fuera todo una misma historia visual». Se arregló en el motor, para todos los puentes a la vez (`src/main.ts`):
+- **Anclas.** Cada acto declara su `entrada` y su `salida` (`Ancla`: un punto de su mundo y un tamaño). Por ejemplo, el II sale por la burbuja de su árbol y el III entra por nuestra burbuja.
+- **Relevo.** Durante los primeros 1,8 beats de un acto, el anterior se sigue dibujando en su último instante. Su mundo se ubica de modo que su `salida` caiga exactamente sobre la `entrada` del nuevo, en el mismo lugar y con el mismo tamaño. Su luz baja (`uFundido`) mientras sube la del nuevo.
+- **Escala de los puntos.** El tamaño de los puntos sigue la escala de ese mundo (`uEscalaMundo`). Sin eso, un mundo encogido se volvía un destello blanco y uno agrandado se volvía invisible.
+- **Cámara.** Arranca exactamente donde la dejó el acto anterior y gira alrededor del ancla, mirándola siempre, con la distancia interpolada en logaritmo. Luego se desliza a la del nuevo acto.
+- **Inicio quieto.** Los actos empiezan sin moverse, mirando su ancla (holds en III, V y la simulación).
+- **Hoja de los puentes:** `node tools/hojas.mjs puentes 0 0` → `docs/viaje/puentes.jpg`, con cinco cuadros por cambio de acto.
+
 ## El viaje según el guion (28 de octubre de 2026, noche)
 
 Todos los actos tienen ya su modo viaje (`montar(stage, estilo, true)`). El viaje no tiene portada ni fundidos, y dura unos 208 beats (~8 min con A):

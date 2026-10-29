@@ -173,6 +173,7 @@ export const tuDoble: Escena = {
     return {
       tl,
       listo,
+      salida: { pos: aqui().applyEuler(GIRO).multiplyScalar(R_T).add(DOBLE), escala: R_T },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);

@@ -96,6 +96,8 @@ export const fractal: Escena = {
 
     return {
       tl,
+      entrada: { pos: V(0, 0, 1.2), escala: 3 },
+      salida: { pos: V(0, 0, 1.2), escala: 3 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);

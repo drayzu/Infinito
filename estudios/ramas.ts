@@ -197,6 +197,14 @@ export const ramas: Escena = {
     }
 
     let burbuja: Nube | null = null;
+    let yo: Nube | null = null;
+    if (viaje) {
+      const yb = materiaBuilder(45);
+      yb.push(0, 0, 0, TU, 0.035, 3.4);
+      yo = materia(yb.data(), { move: 'fuente = 1.0;' });
+      yo.u.uSpread.value = 0;
+      root.add(yo.points);
+    }
     // ---- Ways 1 and 2: the tree.
     let nube: Nube | null = null;
     let tree: ReturnType<typeof arbol> | null = null;
@@ -321,6 +329,8 @@ export const ramas: Escena = {
     return {
       tl,
       listo,
+      entrada: { pos: V(0, 0, 0), escala: 1 },
+      salida: tree ? { pos: tree.centro.clone(), escala: tree.radio * 1.08 } : undefined,
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
@@ -353,6 +363,11 @@ export const ramas: Escena = {
             nube.u.uGain.value = 1 - 0.55 * lj;
             if (lj > 0) pos.lerp(centro.clone().add(lejos.clone().multiplyScalar(5.5)), lj);
             mirar(camera, pos, look.lerp(centro, ease(0, 0.8, out)), up.lerp(V(0, 1, 0), o).normalize());
+            if (yo) {
+              yo.points.position.copy(tmpP);
+              yo.u.uGain.value = (1 + 0.22 * Math.sin(f.time * 1.5)) * (1 - ease(tl.at('uno') + 1.5, tl.at('elige') + 0.5, f.p));
+              enfocar(yo, f.focal, f.dpr, f.time);
+            }
             if (burbuja) {
               burbuja.u.uOn.value = ease(0.3, 1, tl.get('burbuja', f.p));
               enfocar(burbuja, f.focal, f.dpr, f.time);

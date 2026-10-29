@@ -245,6 +245,7 @@ export const final: Escena = {
 
     return {
       tl,
+      entrada: { pos: V(0, 0, 0), escala: 20 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);

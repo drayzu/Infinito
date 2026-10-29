@@ -86,7 +86,8 @@ export const leyes: Escena = {
       // GUION.md 14–19 and the bridge to act IV.
       tl.set({ infla: 0, r: 0, colapso: 0, fuera: 0, cuenta: 0, vacio: 0 });
       tl.label('burbuja').caption(3.8, 'Una burbuja', 'Nuestro universo podría ser una burbuja en algo que se infla sin parar. Y no la única.');
-      tl.to(3.8, { infla: 1, r: 1, vacio: 1 });
+      tl.to(1.8, { infla: 0.45, vacio: 0.6 });
+      tl.to(2.0, { infla: 1, r: 1, vacio: 1 });
       tl.label('niebla').caption(3.8, 'Otra receta', 'En otras, las reglas serían distintas. En esta no se forman átomos: hay una niebla que nunca se junta.');
       tl.to(3.8, { r: 3 });
       tl.label('agujeros').caption(3.0, 'Demasiada gravedad', 'En esta, todo cae en agujeros negros antes de que se encienda una sola estrella.');
@@ -318,6 +319,8 @@ export const leyes: Escena = {
     const tmp = V();
     return {
       tl,
+      entrada: { pos: DESTINOS[3].clone(), escala: 7 },
+      salida: { pos: nudo.clone(), escala: 0.4 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);

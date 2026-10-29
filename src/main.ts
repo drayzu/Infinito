@@ -8,7 +8,7 @@ import { clamp, damp } from './engine/math';
 import { FONDOS } from './engine/pantalla';
 import { createStage, type Stage } from '../estudios/stage';
 import { cuenta, escalera, FONT, ink, VIOLETA } from '../estudios/placa';
-import type { Escena, Frame, Instancia } from '../estudios/tipos';
+import type { Ancla, Escena, Frame, Instancia } from '../estudios/tipos';
 import { tuDoble } from '../estudios/tudoble';
 import { ramas } from '../estudios/ramas';
 import { leyes } from '../estudios/leyes';
@@ -24,6 +24,12 @@ import { final } from '../estudios/final';
  * the acts. Each act builds into its own group (a little before it is reached) and owns the camera
  * while it is on; between acts the film dips through black for a beat (the bridges come later).
  * The clock and the ladder are the studies' plate.
+ *
+ * The relay between two acts (GUION.md's bridges): for the first RELEVO beats of an act, the act
+ * before it is still drawn, its world placed so that its `salida` lands on this act's `entrada`
+ * (same place, same size). The camera starts exactly where the last act left it and slides into
+ * this act's own way; the last act's light fades as this one's comes up. So nothing cuts: the tree
+ * dissolves inside the bubble while our universe's web grows in the same place.
  *
  * URL: ?p=beat (start there) &ver=beat (freeze) &cap=1600x900 (render at that size) &debug (leaves
  * `viaje` in the console: `viaje.hoja('docs/viaje/x.jpg', beats, cols, width)`).
@@ -123,7 +129,34 @@ const mouseTarget = new THREE.Vector2();
 addEventListener('pointermove', (ev) => mouseTarget.set((ev.clientX / innerWidth) * 2 - 1, -((ev.clientY / innerHeight) * 2 - 1)));
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
-let activo: Tramo | null = null;
+/** Beats at the start of an act during which the last one is still there and the camera slides on. */
+const RELEVO = 1.8;
+
+/** Shows `k` of a group's light (the points' uFundido, the black hole's alpha, the backgrounds on or
+ * off) and tells its points the world's scale `escala` (their sizes follow it). */
+function fundir(grupo: THREE.Object3D, k: number, escala = 1) {
+  grupo.traverse((o) => {
+    const un = ((o as THREE.Mesh).material as THREE.ShaderMaterial | undefined)?.uniforms;
+    if (o.renderOrder === -100) o.visible = k > 0.3;
+    if (!un) return;
+    if (un.uEscalaMundo) un.uEscalaMundo.value = escala;
+    if (un.uFundido) un.uFundido.value = k;
+    else if (un.uAlpha) un.uAlpha.value *= k;
+  });
+}
+
+/** The matrix that takes act B's world into act A's, so that B's `entrada` lands on A's `salida`. */
+function mapa(a: Ancla, b: Ancla) {
+  const k = a.escala / b.escala;
+  return new THREE.Matrix4()
+    .makeTranslation(a.pos.x, a.pos.y, a.pos.z)
+    .multiply(new THREE.Matrix4().makeScale(k, k, k))
+    .multiply(new THREE.Matrix4().makeTranslation(-b.pos.x, -b.pos.y, -b.pos.z));
+}
+const mapas = new Map<Tramo, { m: THREE.Matrix4; escala: number }>();
+
+const smooth = (x: number) => x * x * (3 - 2 * x);
+const camA = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 40 };
 
 /** One frame at journey beat `at`, ambient time `now` (ms), step `dt` (s). */
 function step(now: number, dt: number, at: number) {
@@ -132,19 +165,84 @@ function step(now: number, dt: number, at: number) {
   const H = stage.H;
   const { t, p } = enTramo(at);
   const inst = montar(t);
-  if (activo !== t) {
-    if (activo) activo.grupo.visible = false;
-    t.grupo.visible = true;
+  const i = tramos.indexOf(t);
+  const prev = i > 0 ? tramos[i - 1] : null;
+  // The relay is on while this act is young and both acts know where they meet.
+  const enRelevo = !!(prev && p < RELEVO && prev.inst?.salida && inst.entrada);
+  for (const x of tramos) {
+    if (x === t || (enRelevo && x === prev)) continue;
+    if (x.grupo.visible || !x.grupo.matrixAutoUpdate) {
+      x.grupo.visible = false;
+      x.grupo.matrixAutoUpdate = true;
+      x.grupo.matrix.identity();
+      x.grupo.position.set(0, 0, 0);
+      x.grupo.scale.setScalar(1);
+    }
+  }
+  t.grupo.visible = true;
+  const time = calm.matches ? 0 : now / 1000;
+  const f: Frame = { time, dt, p, W, H, u: H / 860, dpr: stage.dpr, focal: H / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), camera };
+  let k = 1;
+  let escalaPrev = 1;
+  if (enRelevo && prev) {
+    // The last act, at its last beat, in its own frame: where its camera was.
+    const pi = prev.inst!;
+    prev.grupo.visible = true;
+    prev.grupo.matrixAutoUpdate = false;
+    prev.grupo.matrix.identity();
+    prev.grupo.updateMatrixWorld(true);
+    pi.update({ ...f, p: prev.largo });
+    camA.pos.copy(camera.position);
+    camA.quat.copy(camera.quaternion);
+    camA.fov = camera.fov;
+    // Its world, placed in this act's: its `salida` on our `entrada`.
+    let mp = mapas.get(t);
+    if (!mp) {
+      mp = { m: mapa(pi.salida!, inst.entrada!).invert(), escala: inst.entrada!.escala / pi.salida!.escala };
+      mapas.set(t, mp);
+    }
+    prev.grupo.matrix.copy(mp.m);
+    prev.grupo.updateMatrixWorld(true);
+    camA.pos.applyMatrix4(mp.m);
+    escalaPrev = mp.escala;
+    k = smooth(clamp(p / RELEVO, 0, 1));
+  }
+  inst.update(f);
+  if (enRelevo && prev) {
+    // The camera: from where the last act left it to where this act wants it, turning round our
+    // entrada and moving through distance in log (worlds of very different sizes meet here).
+    const ancla = inst.entrada!.pos;
+    const v0 = camA.pos.clone().sub(ancla);
+    const v1 = camera.position.clone().sub(ancla);
+    const l0 = Math.max(v0.length(), 1e-9);
+    const l1 = Math.max(v1.length(), 1e-9);
+    const q = new THREE.Quaternion().setFromUnitVectors(v0.clone().divideScalar(l0), v1.clone().divideScalar(l1));
+    const dir = v0.clone().divideScalar(l0).applyQuaternion(new THREE.Quaternion().slerp(q, k));
+    camera.position.copy(ancla).addScaledVector(dir, Math.exp(Math.log(l0) + (Math.log(l1) - Math.log(l0)) * k));
+    // Orientation: the same turn as the position (so the anchor stays where it was on the screen),
+    // plus the roll that is left between the two views, spread over the relay.
+    const qB = camera.quaternion.clone();
+    const twist = q.clone().multiply(camA.quat).invert().multiply(qB);
+    camera.quaternion.copy(new THREE.Quaternion().slerp(q, k).multiply(camA.quat).multiply(new THREE.Quaternion().slerp(twist, k)));
+    camera.fov = camA.fov + (camera.fov - camA.fov) * k;
+    // The light: the last act's fades as this one's comes up (they add, so the sum holds).
+    const c = smooth(clamp((p - 0.05) / (RELEVO * 0.8), 0, 1));
+    fundir(prev.grupo, 1 - c, escalaPrev);
+    fundir(t.grupo, c);
+    const fa = prev.film!;
+    const fb = t.film!;
+    stage.bloom.strength = fa.strength + (fb.strength - fa.strength) * k;
+    stage.bloom.radius = fa.radius + (fb.radius - fa.radius) * k;
+    stage.bloom.threshold = fa.threshold + (fb.threshold - fa.threshold) * k;
+  } else {
+    fundir(t.grupo, 1);
     if (t.film) {
       stage.bloom.strength = t.film.strength;
       stage.bloom.radius = t.film.radius;
       stage.bloom.threshold = t.film.threshold;
-      stage.renderer.toneMappingExposure = t.film.exposure;
+      if (!enRelevo && t.escena.id !== 'agujero') stage.renderer.toneMappingExposure = t.film.exposure;
     }
-    activo = t;
   }
-  const f: Frame = { time: calm.matches ? 0 : now / 1000, dt, p, W, H, u: H / 860, dpr: stage.dpr, focal: H / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), camera };
-  inst.update(f);
   if (!fixed && !calm.matches) {
     mouse.x = damp(mouse.x, mouseTarget.x, 3, dt);
     mouse.y = damp(mouse.y, mouseTarget.y, 3, dt);

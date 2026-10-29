@@ -414,6 +414,8 @@ export const simulacion: Escena = {
     return {
       tl,
       listo,
+      entrada: { pos: V(0, 0, 0), escala: 1 },
+      salida: { pos: V(0, 0, 0), escala: 2000 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
@@ -508,7 +510,7 @@ export const simulacion: Escena = {
             const th = Math.tan(THREE.MathUtils.degToRad(20));
             const fit = Math.max(ex / (th * camera.aspect), ey / th) * 1.5 + ez;
             const dMax = NIVELES[NIVELES.length - 1].E * 1.6;
-            const d = Math.max(3.0, fit, logLerp(3.0, dMax, ease(0, 1, lejos / 3.6)), logLerp(70, 3.0, ease(0, 1, tl.get('acerca', p))));
+            const d = Math.max(3.0, fit, logLerp(3.0, dMax, ease(0, 1, lejos / 3.6)), logLerp(32, 3.0, ease(0, 1, tl.get('acerca', p))));
             for (const nv of NIVELES) if (nv.nube) {
               nv.nube.u.uOn.value = ease(nv.S * 0.5, nv.S * 2.2, d);
               enfocar(nv.nube, f.focal, f.dpr, f.time);

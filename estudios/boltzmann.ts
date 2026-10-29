@@ -273,6 +273,8 @@ export const boltzmann: Escena = {
     return {
       tl,
       listo,
+      entrada: { pos: V(0, 0, 0), escala: estilo === 1 ? RB : 14 },
+      salida: { pos: V(0, 0, 0), escala: estilo === 1 ? RB * 6 : 10 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);

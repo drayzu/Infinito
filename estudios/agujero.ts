@@ -211,6 +211,8 @@ export const agujero: Escena = {
 
     return {
       tl,
+      entrada: { pos: V(0, 0, 0), escala: 16 },
+      salida: { pos: estrellaPos.clone(), escala: 0.02 },
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
