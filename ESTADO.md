@@ -62,6 +62,20 @@ Diego sintió la página «bugeada»: el hilo del acto II aparecía de golpe, la
 - **Saltos de brillo suavizados:** el universo breve, el cerebro de Boltzmann (se arma y se deshace más escalonado) y las últimas copias de la simulación.
 - **Herramienta:** `viaje.sonda(b)` (con `?debug&cap=1600x900`) da el acto, la cámara, el tiempo del cuadro y el brillo medio. Con ella se audita el viaje entero: hacia adelante cada 0,1 beat y yendo y volviendo sobre cada cambio de acto.
 
+## Publicada (29 de octubre de 2026)
+
+- **El sitio.** https://drayzu.github.io/Infinito/, en GitHub Pages con fuente «GitHub Actions» (`.github/workflows/deploy.yml`, el mismo de Destino). Cada push a `main` hace build y publica.
+- **El README.** La portada es el hilo del acto II completo, con la frase *«Beyond the last thing we could know.»*, de Diego. Siguen seis filas:
+  1. Your double;
+  2. Other laws;
+  3. A universe inside (la caída);
+  4. Every instant, at once (el túnel de cuadros);
+  5. Copies of a world;
+  6. A mind from nothing (Boltzmann).
+
+  Diego no quiso una fila del final, para no adelantarlo. Debajo va la barra ENTER.
+- **Rehacer el README.** `node tools/clip.mjs [--fresh <clip>]` graba con beats locales por acto (`tools/readme.json`) y `python tools/readme_media.py [<clip>]` compone.
+
 ## La Tierra de la serie y el árbol (28 de octubre de 2026, noche)
 
 - **La Tierra de `horizontes-cuerpos`** (puntos con los mapas reales, nubes, el brillo del mar, el halo y puntos más finos al acercarse) reemplaza a la Tierra liviana de los estudios:
