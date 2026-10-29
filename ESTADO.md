@@ -47,6 +47,15 @@ Diego lo aprobó: «Me encanta mucho. Por favor hazlo… Vamos a hacer arte». *
 
   Después vienen el ritmo de Destino, la lámina, el sonido, el idioma y el móvil.
 
+## La Tierra de la serie y el árbol (28 de octubre de 2026, noche)
+
+- **La Tierra de `horizontes-cuerpos`** (puntos con los mapas reales, nubes, el brillo del mar, el halo y puntos más finos al acercarse) reemplaza a la Tierra liviana de los estudios:
+  - en la apertura y el acto I (`tudoble.ts`: la nuestra y la del doble);
+  - en la simulación (manera 4), hasta que la Tierra se vuelve celdas, cuando le cede el lugar a la Tierra de bits.
+
+  Se atenúa con `presencia` y sus puntos siguen solos la escala del grupo. La del holograma sigue siendo la liviana, porque se deshace en bits.
+- **El árbol de «Mirar atrás»:** queda parado, con la raíz abajo, y siempre de frente a su lado más ancho: el eje principal de las puntas alrededor del tronco, con un vaivén de ±0,3 rad. Diego notó que, al girar, a veces se veía delgado.
+
 ## Los relevos (28 de octubre de 2026, noche)
 
 Diego, sobre el paso del II al III: «estas transiciones hacen parecer que fueran módulos, que no fuera todo una misma historia visual». Se arregló en el motor, para todos los puentes a la vez (`src/main.ts`):

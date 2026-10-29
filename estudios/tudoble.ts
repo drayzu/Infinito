@@ -3,7 +3,8 @@ import { Timeline } from './timeline';
 import { enfocar, materia, materiaBuilder, type Nube } from '../src/engine/materia';
 import { lerp } from '../src/engine/math';
 import { deH, FONT, h10, h1010, ink, slog, VIOLETA, type Cuenta, type Rotulo } from './placa';
-import { aqui, ease, LUZ_TIERRA, logLerp, mapaTierra, mirar, redCosmica, tierraDatos, TU, V } from './comun';
+import { aqui, ease, logLerp, mirar, redCosmica, TU, V } from './comun';
+import { tierra as tierraHorizontes, type Planeta } from '../src/horizontes';
 import type { Escena, Frame, Instancia } from './tipos';
 
 /**
@@ -74,7 +75,10 @@ export const tuDoble: Escena = {
     tl.to(2.4, { apaga: 1 });
 
     // ---------------------------------------------------------------- the two Earths and you
-    const tierras: { g: THREE.Group; n: Nube | null; yo: Nube }[] = [];
+    // The Earth of the series (horizontes-cuerpos: points coloured with the real maps, clouds, the sea's
+    // glint, finer points as the camera comes down). Ours and the double's are the same planet.
+    const base = `${import.meta.env.BASE_URL}texturas/`;
+    const tierras: { g: THREE.Group; n: Planeta; yo: Nube; presencia: number }[] = [];
     for (const centro of [V(0, 0, 0), DOBLE]) {
       const g = new THREE.Group();
       g.position.copy(centro);
@@ -87,26 +91,14 @@ export const tuDoble: Escena = {
       const yo = materia(b.data(), { move: 'fuente = 1.0;' });
       yo.u.uSpread.value = 0;
       g.add(yo.points);
-      tierras.push({ g, n: null, yo });
+      const n = tierraHorizontes(base);
+      g.add(n.group);
+      tierras.push({ g, n, yo, presencia: 0 });
     }
     // The Sun low on Santiago's horizon: dusk there.
     const S = aqui();
     const solLocal = S.clone().cross(V(0, 1, 0)).normalize().multiplyScalar(0.98).addScaledVector(S, 0.2).normalize();
-    const listo = mapaTierra().then((img) => {
-      const d = tierraDatos(img, 110000, 29);
-      for (const t of tierras) {
-        t.n = materia(d, {
-          pre: LUZ_TIERRA + /* glsl */ `uniform vec3 uSol, uCam;`,
-          move: /* glsl */ `
-            em *= luzTierra(normalize(position), uSol);
-            em *= smoothstep(0.96, 1.03, dot(normalize(position), uCam));
-            fuente = 0.3;`,
-          uniforms: { uSol: { value: solLocal.clone() }, uCam: { value: V(0, 0, 10) } },
-        });
-        t.n.u.uSpread.value = 0;
-        t.g.add(t.n.points);
-      }
-    });
+    const listo = Promise.all(tierras.map((t) => t.n.listo));
     // You, far off: a teal point that stays visible at the centre of all we see.
     const mb = materiaBuilder(6);
     mb.push(0, 0, 0, TU, 0.012, 2.6);
@@ -199,7 +191,7 @@ export const tuDoble: Escena = {
 
         // ---- Visibility.
         const [mia, otra] = tierras;
-        if (mia.n) mia.n.u.uGain.value = ease(0, 1, tierraOn) * (1 - ease(0.35, 0.6, aleja));
+        mia.presencia = ease(0, 1, tierraOn) * (1 - ease(0.35, 0.6, aleja));
         mia.yo.u.uGain.value = respira * (1 - ease(0.45, 0.62, aleja));
         marca.u.uGain.value = ease(0.5, 0.65, aleja) * (1 - ease(0, 0.4, vuela)) * respira;
         nuestro.u.uOn.value = ease(0.45, 1, redOn) * (1 - 0.5 * ease(0.6, 1, vuela));
@@ -212,7 +204,7 @@ export const tuDoble: Escena = {
           c.u.uMaxPx.value = 24 * f.dpr;
           c.u.uTime.value = t;
         }
-        if (otra.n) otra.n.u.uGain.value = ease(0.4, 1, zoom) * (1 - ease(0, 0.8, apaga));
+        otra.presencia = ease(0.4, 1, zoom) * (1 - ease(0, 0.8, apaga));
         otra.yo.u.uGain.value = ease(0, 1, llega) * respira * (1 - 0.15 * ease(0.8, 1, apaga));
 
         // ---- The camera.
@@ -249,11 +241,8 @@ export const tuDoble: Escena = {
         camera.updateMatrixWorld();
         for (const tt of tierras) {
           tt.g.updateMatrixWorld();
-          if (tt.n) {
-            (tt.n.u.uCam.value as THREE.Vector3).copy(tt.g.worldToLocal(camera.position.clone()));
-            enfocar(tt.n, f.focal, f.dpr, t);
-            tt.n.u.uSizeUnit.value = R_T;
-          }
+          tt.n.group.visible = tt.presencia > 0.002;
+          tt.n.update({ sol: solLocal, camara: tt.g.worldToLocal(camera.position.clone()), focal: f.focal, dpr: f.dpr, tiempo: t, presencia: tt.presencia });
           enfocar(tt.yo, f.focal, f.dpr, t);
           tt.yo.u.uSizeUnit.value = R_T;
         }

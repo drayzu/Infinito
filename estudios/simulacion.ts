@@ -4,6 +4,7 @@ import { enfocar, materia, materiaBuilder, type MateriaData, type Nube } from '.
 import { lerp } from '../src/engine/math';
 import { h10, ink, deH, proyectar, slog, texto, VIOLETA, type Cuenta, type Rotulo } from './placa';
 import { aqui, ease, LUZ_TIERRA, logLerp, mapaTierra, mirar, tierraDatos, TU, V } from './comun';
+import { tierra as tierraHorizontes, type Planeta } from '../src/horizontes';
 import type { Escena, Frame, Instancia } from './tipos';
 
 /**
@@ -246,6 +247,17 @@ export const simulacion: Escena = {
       genes.push(genes[g - 1].flatMap((n) => [-1, 1].map((sg) => ({ pos: n.pos.clone().addScaledVector(dir, sg * L), padre: n.pos.clone() }))));
     }
     const dup8: { points: THREE.Points; u: Nube['u']; yo: Nube }[] = [];
+    // Way 4: before it becomes computable, the Earth is the series' own (horizontes-cuerpos); it gives
+    // way to the Earth of cells as the cells appear.
+    let real: { g: THREE.Group; n: Planeta; presencia: number } | null = null;
+    if (estilo === 3) {
+      const g = new THREE.Group();
+      g.rotation.copy(GIRO);
+      root.add(g);
+      const n = tierraHorizontes(`${import.meta.env.BASE_URL}texturas/`);
+      g.add(n.group);
+      real = { g, n, presencia: 1 };
+    }
     const dup64: { points: THREE.Points; u: Nube['u'] }[] = [];
     let dupPuntos: Nube | null = null;
 
@@ -413,7 +425,7 @@ export const simulacion: Escena = {
     const tmp = V();
     return {
       tl,
-      listo,
+      listo: Promise.all([listo, real?.n.listo]),
       entrada: { pos: V(0, 0, 0), escala: 1 },
       salida: { pos: V(0, 0, 0), escala: 2000 },
       cuenta: cuentaDe,
@@ -486,8 +498,11 @@ export const simulacion: Escena = {
               c.u.uMaxPx.value = 24 * f.dpr;
               c.u.uTime.value = f.time;
             };
+            const celdaK = ease(0.003, 0.03, tl.get('celda', p));
+            if (real) real.presencia = 1 - celdaK;
             dup8.forEach((c, i) => {
               ajustar(c, genes[Math.min(nG, 3)][i], nG <= 3);
+              c.u.uGain.value = celdaK;
               enfocar(c.yo, f.focal, f.dpr, f.time);
               c.yo.u.uGain.value = 1 - 0.3 * tl.get('bits', p);
             });
@@ -544,6 +559,11 @@ export const simulacion: Escena = {
         }
         // The camera in every world's own frame (for the far-side cull).
         root.updateMatrixWorld();
+        if (real) {
+          real.n.group.visible = real.presencia > 0.002;
+          const solL = V(0.55, 0.3, 0.8).normalize().applyQuaternion(real.g.quaternion.clone().invert());
+          real.n.update({ sol: solL, camara: real.g.worldToLocal(camera.position.clone()), focal: f.focal, dpr: f.dpr, tiempo: f.time, presencia: real.presencia });
+        }
         if (t) (t.u.uCam.value as THREE.Vector3).copy(mundo.worldToLocal(camera.position.clone()));
         for (const o of [...otros, ...dup8, ...dup64]) if (o.points.visible) (o.u.uCam.value as THREE.Vector3).copy(o.points.worldToLocal(camera.position.clone()));
       },

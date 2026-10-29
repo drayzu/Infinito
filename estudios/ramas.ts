@@ -91,8 +91,22 @@ function arbol(seed: number, G: number, ang: number, k: number, L0 = 1, sube = 0
   const centro = ramas.reduce((c, x) => c.add(x.b), V()).multiplyScalar(1 / ramas.length);
   const radio = Math.max(...ramas.map((x) => x.b.distanceTo(centro)));
   const zmin = Math.min(...ramas.map((x) => x.b.z));
-  const ancho = 2 * Math.max(...ramas.map((x) => Math.hypot(x.b.x - centro.x, x.b.y - centro.y)));
-  return { data, tu, ramas, splits, camino, fin, centro, radio, zmin, ancho };
+  // Seen from the side the crown is wider one way than the other: its widest direction (the main axis
+  // of the branch ends round the trunk), and how wide it is that way.
+  let sxx = 0;
+  let syy = 0;
+  let sxy = 0;
+  for (const x of ramas) {
+    const dx = x.b.x - centro.x;
+    const dy = x.b.y - centro.y;
+    sxx += dx * dx;
+    syy += dy * dy;
+    sxy += dx * dy;
+  }
+  const angulo = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  const eje = V(Math.cos(angulo), Math.sin(angulo), 0);
+  const ancho = 2 * Math.max(...ramas.map((x) => Math.abs((x.b.x - centro.x) * eje.x + (x.b.y - centro.y) * eje.y)));
+  return { data, tu, ramas, splits, camino, fin, centro, radio, zmin, ancho, angulo };
 }
 
 const ARBOL_PRE = /* glsl */ `
@@ -357,7 +371,9 @@ export const ramas: Escena = {
             const o = ease(0, 1, out);
             const centro = estilo === 0 ? V(0, 0, -2.2) : tree.centro.clone();
             const a = 0.6 + f.time * 0.02;
-            const lado = V(Math.cos(0.4 + a * 0.5), Math.sin(0.4 + a * 0.5), 0);
+            // Facing the crown's widest side, swaying a little round it (never edge-on, where it looks thin).
+            const la = tree.angulo + Math.PI / 2 + 0.3 * Math.sin(f.time * 0.05);
+            const lado = V(Math.cos(la), Math.sin(la), 0);
             const th = Math.tan(THREE.MathUtils.degToRad(22));
             const alto = -tree.zmin;
             const objetivo = V(tree.centro.x, tree.centro.y, tree.zmin * 0.53);
