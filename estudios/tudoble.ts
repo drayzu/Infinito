@@ -196,14 +196,6 @@ export const tuDoble: Escena = {
         marca.u.uGain.value = ease(0.5, 0.65, aleja) * (1 - ease(0, 0.4, vuela)) * respira;
         nuestro.u.uOn.value = ease(0.45, 1, redOn) * (1 - 0.5 * ease(0.6, 1, vuela));
         horizonte.u.uOn.value = ease(0.6, 1, redOn) * (0.45 + 0.55 * ease(0, 1, sale));
-        for (const c of copias) {
-          const base = c.esDoble ? lerp(0.4, 1, ease(0.3, 1, vuela)) * (1 - 0.9 * ease(0, 1, llega)) : 0.28 * (1 - ease(0, 0.6, zoom));
-          c.u.uOn.value = ease(0, 0.6, sale) * base * Math.exp(-c.pos.distanceTo(camera.position) / 14);
-          c.u.uFocal.value = f.focal;
-          c.u.uMinPx.value = 1.6 * f.dpr;
-          c.u.uMaxPx.value = 24 * f.dpr;
-          c.u.uTime.value = t;
-        }
         otra.presencia = ease(0.4, 1, zoom) * (1 - ease(0, 0.8, apaga));
         otra.yo.u.uGain.value = ease(0, 1, llega) * respira * (1 - 0.15 * ease(0.8, 1, apaga));
 
@@ -239,6 +231,16 @@ export const tuDoble: Escena = {
         }
         mirar(camera, pos, look);
         camera.updateMatrixWorld();
+        // The regions' light depends on how far the camera is: set after the camera is placed (before,
+        // it read the last frame's camera, which in a relay is the next act's, in another scale).
+        for (const c of copias) {
+          const base = c.esDoble ? lerp(0.4, 1, ease(0.3, 1, vuela)) * (1 - 0.9 * ease(0, 1, llega)) : 0.28 * (1 - ease(0, 0.6, zoom));
+          c.u.uOn.value = ease(0, 0.6, sale) * base * Math.exp(-c.pos.distanceTo(camera.position) / 14);
+          c.u.uFocal.value = f.focal;
+          c.u.uMinPx.value = 1.6 * f.dpr;
+          c.u.uMaxPx.value = 24 * f.dpr;
+          c.u.uTime.value = t;
+        }
         for (const tt of tierras) {
           tt.g.updateMatrixWorld();
           tt.n.group.visible = tt.presencia > 0.002;
