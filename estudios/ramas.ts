@@ -88,8 +88,12 @@ function arbol(seed: number, G: number, ang: number, k: number, L0 = 1, sube = 0
   const splits = ramas.filter((x) => x.gen + 1 < G).map((x) => x.t1).sort((x, y) => x - y);
   const camino = ramas.filter((x) => x.tu).sort((x, y) => x.t0 - y.t0);
   const fin = Math.max(...ramas.map((x) => x.t1));
-  const centro = ramas.reduce((c, x) => c.add(x.b), V()).multiplyScalar(1 / ramas.length);
-  const radio = Math.max(...ramas.map((x) => x.b.distanceTo(centro)));
+  // The sphere that holds the whole tree, root and trunk included (its box's middle, out to the
+  // farthest point): the bubble of act III closes round it.
+  const box = new THREE.Box3();
+  for (const x of ramas) box.expandByPoint(x.a).expandByPoint(x.b);
+  const centro = box.getCenter(V());
+  const radio = Math.max(...ramas.flatMap((x) => [x.a.distanceTo(centro), x.b.distanceTo(centro)]));
   const zmin = Math.min(...ramas.map((x) => x.b.z));
   // Seen from the side the crown is wider one way than the other: its widest direction (the main axis
   // of the branch ends round the trunk), and how wide it is that way.
