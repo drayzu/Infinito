@@ -47,6 +47,21 @@ Diego lo aprobó: «Me encanta mucho. Por favor hazlo… Vamos a hacer arte». *
 
   Después vienen el ritmo de Destino, la lámina, el sonido, el idioma y el móvil.
 
+## Auditoría y arreglos (29 de octubre de 2026)
+
+Diego sintió la página «bugeada»: el hilo del acto II aparecía de golpe, la cámara daba un tirón en las bifurcaciones, y al final del acto I la pantalla quedaba negra.
+- **El acto anterior se quedaba fuera de lugar.** Durante un relevo, el acto anterior se ubica dentro del mundo del nuevo. Si el scroll volvía atrás, aunque fuera un poco, ese acto ya no regresaba a su lugar y se dibujaba desplazado: pantalla negra. Ahora vuelve a su lugar.
+- **Tirón en las bifurcaciones.** La distancia de la cámara dependía del largo de cada rama, que salta en cada división. Ahora sigue el largo nominal de cada generación, de forma continua. Medido: los saltos eran de hasta 100 veces el paso normal y ahora son de 2,6.
+- **Trabas la primera vez que algo se dibuja** (hasta 1 s al entrar al agujero negro):
+  - los shaders se compilan para el destino fuera de pantalla de la película (HalfFloat): para el lienzo, three arma otros programas;
+  - un render de calentamiento sube todas las nubes de puntos a la GPU;
+  - al cargar, el viaje entero se recorre cada 0,5 beat sin que se vea: 3 pasos por cuadro y después el cuadro real.
+
+  Tras esto, la segunda pasada y la primera dan igual.
+- **El agujero negro:** el horizonte se cruza en 0,6 beat y las estrías se ven desde que entras. El rebote es un solo destello, del que sube el universo nuevo, y la cámara pasa sin saltar.
+- **Saltos de brillo suavizados:** el universo breve, el cerebro de Boltzmann (se arma y se deshace más escalonado) y las últimas copias de la simulación.
+- **Herramienta:** `viaje.sonda(b)` (con `?debug&cap=1600x900`) da el acto, la cámara, el tiempo del cuadro y el brillo medio. Con ella se audita el viaje entero: hacia adelante cada 0,1 beat y yendo y volviendo sobre cada cambio de acto.
+
 ## La Tierra de la serie y el árbol (28 de octubre de 2026, noche)
 
 - **La Tierra de `horizontes-cuerpos`** (puntos con los mapas reales, nubes, el brillo del mar, el halo y puntos más finos al acercarse) reemplaza a la Tierra liviana de los estudios:
