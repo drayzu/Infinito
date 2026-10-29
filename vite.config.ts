@@ -33,7 +33,7 @@ function guardar(): Plugin {
   };
 }
 
-// Infinito, phase 0: the studies (estudios/index.html, estudios/doble.html). Port 5203.
+// Infinito: the journey (index.html) and the phase-0 studies (estudios/). Port 5203.
 export default defineConfig({
   base: './',
   plugins: [guardar()],
@@ -41,6 +41,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        main: 'index.html',
         estudios: 'estudios/index.html',
         doble: 'estudios/doble.html',
       },

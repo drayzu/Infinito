@@ -33,6 +33,18 @@ const send = (method, params = {}) => new Promise((r) => { const i = ++id; pendi
 await send('Runtime.enable');
 for (let i = 0; i < args.length; i += 3) {
   const [m, s, n] = [args[i], Number(args[i + 1]), Number(args[i + 2])];
+  if (m === 'viaje') {
+    // The whole journey: n frames spread over it (s is ignored), into docs/viaje/viaje.jpg.
+    await send('Page.navigate', { url: 'http://localhost:5203/index.html?debug&cap=1600x900' });
+    await sleep(6000);
+    const r = await send('Runtime.evaluate', {
+      awaitPromise: true,
+      returnByValue: true,
+      expression: `(async () => { await viaje.listo(); const L = viaje.total; const b = Array.from({ length: ${n} }, (_, i) => +(0.2 + i * (L - 0.4) / ${n - 1}).toFixed(2)); await viaje.hoja('docs/viaje/viaje.jpg', b, 6, 320); return JSON.stringify(viaje.tramos()) + ' total ' + L.toFixed(1); })()`,
+    });
+    console.log(`viaje: ${r.result?.result?.value ?? JSON.stringify(r.result?.exceptionDetails ?? r)}`);
+    continue;
+  }
   await send('Page.navigate', { url: `http://localhost:5203/estudios/index.html?m=${m}&s=${s}&debug&cap=1600x900` });
   await sleep(2500);
   const r = await send('Runtime.evaluate', {

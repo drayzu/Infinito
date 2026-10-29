@@ -21,6 +21,32 @@
   - **Simulación:** «definitivamente muñecas» (3). Le gustó la Tierra que se replica de «Tus Tierras» y preguntó si cabía en la simulación. Cabe: un mundo calculado es información, y la información se copia; además, el argumento de Bostrom depende de las copias. La manera 4, `Elegida`, une las muñecas con la Tierra de bits que se copia en 3D hasta formar la red de mundos.
   - **El tiempo no pasa:** empieza con la hélice; de cerca pasa a las rebanadas; al salir de ellas se ve la escena final de la hélice, con las líneas de las estrellas alrededor. Es la manera 3, `Elegida` (`estudios/bloqueElegida.ts`). Todo ocurre en un mismo mundo con el tiempo en +Y, y `uE` estira el tiempo ×12 al acercarse. Diego probó una versión más corta y prefirió volver a la original (25 beats).
 
+## El viaje (fase 1, desde el 28 de octubre de 2026)
+
+`index.html` + `src/main.ts`, en http://localhost:5203/. Es un solo scroll por las maneras elegidas, en el orden de los actos:
+1. Portada.
+2. I tu doble (`estudios/tudoble.ts`, nuevo).
+3. II ramas 4.
+4. III leyes 1.
+5. IV agujero 1.
+6. V bloque 3.
+7. VI simulación 4, holograma y Boltzmann.
+8. El fractal.
+9. El final 4.
+
+Son unos 167 beats; con **A**, unos 6 minutos.
+- **Cada acto se monta en su propio grupo**: un `stage` cuya raíz es ese grupo. Mientras está activo, controla la cámara y vuelve a poner su propio resplandor.
+- **Entre actos hay un fundido a negro de medio beat**, provisional hasta que existan los puentes.
+- **Capturas:** `node tools/hojas.mjs viaje 0 48` escribe `docs/viaje/viaje.jpg`.
+
+**Lo que falta en el viaje:**
+- **Puentes entre actos.** Por ejemplo, la Tierra de tu doble se vuelve el hilo de tu primera rama.
+- **El ritmo de Destino** (`ritmo.ts`: autoplay a velocidad de lectura, nada brusco a mano).
+- **La lámina (I), el sonido (S), el idioma (L) y el modo liviano en el celular.**
+- **Verificar cada cifra** antes de fijar los textos.
+- **Acortar el holograma.**
+- **Montar los actos de a poco**: hoy se montan todos al cargar para medir sus largos.
+
 ## Cómo están hechos los estudios
 
 - `npm run dev` abre el puerto 5203.
