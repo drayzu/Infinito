@@ -358,7 +358,10 @@ function step(now: number, dt: number, at: number) {
 }
 
 let last = performance.now();
+/** Recording (tools/clip.mjs): the page stops drawing by itself; frames come only from `cuadro`. */
+let grabando = false;
 function frame(now: number) {
+  if (grabando) return;
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   if (autoplay) {
@@ -395,6 +398,14 @@ function shot(b: number, warm = 40) {
   return out;
 }
 const api = {
+  grabar() {
+    grabando = true;
+  },
+  /** One frame of the film at beat b, ambient time `now` (ms), as a JPEG data URL (needs ?cap=WxH). */
+  cuadro(b: number, now: number, q = 0.95) {
+    step(now, 1 / 30, b);
+    return canvas.toDataURL('image/jpeg', q);
+  },
   /** Debug: one frame at beat b: the act, the camera, the frame's time (with the read back) and the film's mean brightness (0..765). */
   sonda(b: number, now = 0) {
     const t0 = performance.now();

@@ -1,0 +1,9 @@
+[
+  {"nombre": "hero", "acto": "ramas", "claves": [[0, 0.3], [1.1, 1.2], [2.2, 3.0], [3.6, 4.6], [5.6, 8.0], [7.4, 12.6], [8.4, 13.6], [10.6, 16.8], [11.6, 17.7]]},
+  {"nombre": "double", "acto": "doble", "claves": [[0, 25.0], [1.6, 26.4], [3.2, 27.9], [4.6, 29.3]]},
+  {"nombre": "laws", "acto": "leyes", "b": 0.6, "d": 3.2, "n": 150},
+  {"nombre": "inside", "acto": "agujero", "claves": [[0, 2.9], [1.0, 3.6], [1.3, 4.95], [2.2, 5.45], [4.2, 6.35]]},
+  {"nombre": "time", "acto": "bloque", "b": 10.4, "d": 3.4, "n": 150},
+  {"nombre": "copies", "acto": "simulacion", "b": 4.0, "d": 4.8, "n": 150},
+  {"nombre": "mind", "acto": "real2", "b": 4.5, "d": 2.9, "n": 150}
+]
