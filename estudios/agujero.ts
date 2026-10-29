@@ -105,7 +105,9 @@ export const agujero: Escena = {
           move: /* glsl */ `
             // Each streak runs towards the camera and past it, faster and longer as the fall goes on.
             float L = 14.0;
-            float z = fract(position.z - uTime * (0.25 + 1.2 * uCae)) * L;
+            // Time × speed jumped whenever the speed changed (the whole field leapt): the drift is slow and
+            // steady, and the fall itself moves them, with the scroll (faster as it goes on).
+            float z = fract(position.z - uTime * 0.25 - uCae * (0.6 + 3.0 * uCae)) * L;
             float stretch = 0.12 + 0.45 * uCae;
             p = vec3(p.xy * (1.0 - 0.6 * uCae * (1.0 - z / L)), -z + aDelay * stretch);
             em *= uOn * (1.1 + 0.6 * uCae) * smoothstep(L, L * 0.6, z) * smoothstep(0.0, 1.0, z);
@@ -236,12 +238,11 @@ export const agujero: Escena = {
           const el = lerp(0.16, 0.05, ease(0.3, 1, d));
           const az = 0.4 + 0.25 * d;
           const pos = V(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(dist);
-          if (dentro < 1) {
-            mirar(camera, pos, V(0, 0.9 * ease(0.4, 0.9, d) * (1 - ease(0.9, 1, d)), 0));
-          } else {
-            // Inside: the camera's own frame (the streaks are drawn round it).
-            mirar(camera, V(0, 0, 0.001), V(0, 0, -1));
-          }
+          // Crossing the horizon the camera eases from the outside view into the fall's frame (the streaks
+          // run along −z round the origin); it used to switch in one frame at dentro = 1.
+          const cruza = ease(0, 1, dentro);
+          const mira = V(0, 0.9 * ease(0.4, 0.9, d) * (1 - ease(0.9, 1, d)), 0).lerp(V(0, 0, -1), cruza);
+          mirar(camera, pos.clone().lerp(V(0, 0, 0.001), cruza), mira);
           // The camera's way from the fall into the new universe (used below once the bounce starts).
           const pasa = ease(0.15, 0.85, rebote);
           camera.updateMatrixWorld();
