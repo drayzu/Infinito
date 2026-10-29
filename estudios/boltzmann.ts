@@ -69,7 +69,7 @@ export const boltzmann: Escena = {
     { key: '1', nombre: 'Cerebro de Boltzmann', nota: 'En el vacío frío del final, el azar junta unas partículas en un cerebro con recuerdos de una vida que nunca vivió; piensa un instante y se deshace.' },
     { key: '2', nombre: 'Holograma', nota: 'La Tierra entera, de la corteza al núcleo, se escribe en una esfera de bits que la rodea; y desde esa esfera se vuelve a formar.' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.5;
@@ -90,10 +90,24 @@ export const boltzmann: Escena = {
     let vacio: Nube | null = null;
     const otros: { points: THREE.Points; u: Nube['u']; fase: number }[] = [];
     if (estilo === 0) {
-      tl.set({ espera: 0, arma: 0, piensa: 0, cuenta: 0, az: 0, cerca: 0, muchos: 0 });
-      tl.label('frio').caption(3.0, 'El final frío', 'Dentro de muchísimo tiempo, el universo será un vacío casi vacío y frío, con unas pocas partículas que vagan al azar.');
-      tl.to(3.0, { espera: 0.3, az: 0.3 });
-      tl.label('azar').caption(3.0, 'El azar', 'Pero si el tiempo no se acaba, el azar las junta de todas las maneras posibles. Casi siempre, en nada.');
+      tl.set({ espera: 0, arma: 0, piensa: 0, cuenta: 0, az: 0, cerca: 0, muchos: 0, fin: 0 });
+      if (viaje) {
+        tl.label('frio').caption(4.6, 'El final frío', 'Y aunque fueras real: si el tiempo no se acaba, el azar termina armando todo lo posible.');
+        tl.to(4.6, { espera: 1, az: 0.6, cerca: 0.4 });
+        tl.label('cerebro').caption(3.8, 'Un cerebro de la nada', 'Hasta un cerebro con tus recuerdos, que piensa un instante y se deshace.');
+        tl.to(1.4, { arma: 1, az: 0.8, cerca: 1 });
+        tl.to(1.4, { piensa: 1, az: 0.95 });
+        tl.to(1.0, { arma: 0, piensa: 1.2, az: 1.05 });
+        tl.label('tu').caption(4.4, '¿Cómo sabes?', 'Habría más de esos que personas como tú. ¿Cómo sabes cuál eres? No hay forma de saberlo.');
+        tl.to(1.2, { arma: 1, piensa: 1.3, cuenta: 1 });
+        tl.to(3.2, { piensa: 2.2, az: 1.3, muchos: 1, cerca: 0.3 });
+        tl.label('puente').caption(3.0, '', 'Si nada de esto es seguro, ¿qué queda al fondo?');
+        tl.to(3.0, { fin: 1, arma: 0 });
+      }
+      if (!viaje) tl.label('frio').caption(3.0, 'El final frío', 'Dentro de muchísimo tiempo, el universo será un vacío casi vacío y frío, con unas pocas partículas que vagan al azar.');
+      if (!viaje) tl.to(3.0, { espera: 0.3, az: 0.3 });
+      if (!viaje) tl.label('azar').caption(3.0, 'El azar', 'Pero si el tiempo no se acaba, el azar las junta de todas las maneras posibles. Casi siempre, en nada.');
+      if (!viaje) {
       tl.to(3.0, { espera: 1, az: 0.6, cerca: 0.4 });
       tl.label('cerebro').caption(3.6, 'Un cerebro de la nada', 'Tarde o temprano se arma un cerebro, con recuerdos de una vida que nunca vivió. Piensa un instante y se deshace.');
       tl.to(1.4, { arma: 1, az: 0.8, cerca: 1 });
@@ -102,6 +116,7 @@ export const boltzmann: Escena = {
       tl.label('tu').caption(3.6, '¿Y tú?', 'Armar un cerebro solo es mucho más fácil que armar un universo entero. Si el futuro no tiene fin, habría más cerebros así que personas como tú. ¿Cómo sabes cuál eres?');
       tl.to(1.2, { arma: 1, piensa: 1.3, cuenta: 1 });
       tl.to(2.4, { piensa: 2, az: 1.3, cuenta: 1, muchos: 1, cerca: 0.3 });
+      }
 
       brain = add(
         materia(cerebro(1896, 42000), {
@@ -163,16 +178,27 @@ export const boltzmann: Escena = {
     let borde: Nube | null = null;
     const RB = 2.6;
     if (estilo === 1) {
-      tl.set({ proy: 0, cerca: 0, az: 0, cuenta: 0, lejos: 0 });
-      tl.label('volumen').caption(2.8, 'Un volumen', 'Todo lo que hay dentro de una región, cada átomo de la Tierra, de la corteza al núcleo, es información.');
-      tl.to(2.8, { az: 0.4 });
-      tl.label('borde').caption(3.4, 'Escrito en el borde', 'Y toda esa información cabe en la superficie que la rodea, un bit por cada pedacito de área. Así lo enseñan los agujeros negros.');
+      tl.set({ proy: 0, cerca: 0, az: 0, cuenta: 0, lejos: 0, llega: viaje ? 0 : 1, deshace: 0 });
+      if (viaje) {
+        tl.label('borde').caption(4.6, 'Escrito en el borde', 'Quizá ni siquiera es un cálculo: todo lo que hay adentro de una región cabe escrito en su borde.');
+        tl.to(1.4, { llega: 1, az: 0.3 });
+        tl.to(3.2, { proy: 1, az: 0.7, cuenta: 2 });
+        tl.label('proyeccion').caption(3.6, 'La proyección', 'Quizá tú eres la proyección.');
+        tl.to(1.4, { cerca: 1, az: 0.85 });
+        tl.to(2.2, { proy: 0, cerca: 0, az: 1.0 });
+        tl.to(1.6, { deshace: 1 });
+      }
+      if (!viaje) tl.label('volumen').caption(2.8, 'Un volumen', 'Todo lo que hay dentro de una región, cada átomo de la Tierra, de la corteza al núcleo, es información.');
+      if (!viaje) tl.to(2.8, { az: 0.4 });
+      if (!viaje) tl.label('borde').caption(3.4, 'Escrito en el borde', 'Y toda esa información cabe en la superficie que la rodea, un bit por cada pedacito de área. Así lo enseñan los agujeros negros.');
+      if (!viaje) {
       tl.to(3.4, { proy: 1, az: 0.8, cuenta: 1 });
       tl.label('proyeccion').caption(3.6, 'Una proyección', 'Quizá lo real es el borde, y lo de adentro, tú incluido, es su proyección: un holograma.');
       tl.to(1.4, { cerca: 1, az: 0.95 });
       tl.to(2.2, { proy: 0, cerca: 0.3, az: 1.1 });
       tl.label('universo').caption(3.2, 'Los bits del universo', 'Todo el universo observable cabría en unos 10¹²² bits escritos en su horizonte.');
       tl.to(3.2, { lejos: 1, cuenta: 2, az: 1.3 });
+      }
 
       listo = mapaTierra().then((img) => {
         // The Earth as a solid ball: its surface (the map) and inside it the mantle and the core.
@@ -238,6 +264,7 @@ export const boltzmann: Escena = {
         return { pisos: deH(h), linea: e < 0.05 ? 'años desde hoy · los agujeros negros ya se evaporaron' : 'años de espera', h };
       }
       if (c < 0.01) return { pisos: ['10', '50'], linea: 'átomos de la Tierra', h: h10(50) };
+      if (viaje) return { pisos: ['10', '122'], linea: 'bits en el borde de todo lo que vemos', h: h10(122) };
       if (c <= 1) return { pisos: ['10', '84'], linea: 'bits que caben en la esfera que la rodea · como máximo', h: h10(84) };
       const h = lerp(h10(84), h10(122), ease(1, 2, c));
       return { pisos: deH(h), linea: 'bits en el horizonte del universo observable', h };
@@ -249,7 +276,7 @@ export const boltzmann: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'VI · ¿Y si nada es real?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const p = f.p;
@@ -265,7 +292,7 @@ export const boltzmann: Escena = {
           for (const o of otros) {
             // Each its own cycle: it forms, thinks, comes apart.
             const ciclo = (f.time * 0.12 + o.fase) % 1;
-            o.u.uArma.value = muchos * Math.sin(Math.PI * Math.min(1, ciclo * 1.4)) ** 2;
+            o.u.uArma.value = muchos * Math.sin(Math.PI * Math.min(1, ciclo * 1.4)) ** 2 * (1 - ease(0, 0.7, tl.get('fin', p)));
             o.u.uPiensa.value = f.time * 0.3 + o.fase * 3;
             o.u.uFocal.value = f.focal;
             o.u.uMinPx.value = 1.6 * f.dpr;
@@ -285,7 +312,13 @@ export const boltzmann: Escena = {
           // Up close to the sphere (it reads as a flat grid of bits), then out past the universe.
           const cerca = tl.get('cerca', p);
           const lejos = tl.get('lejos', p);
-          const d = lerp(lerp(6.4, RB + 0.35, ease(0, 1, cerca)), 26, ease(0, 1, lejos));
+          const d = lerp(lerp(6.4, RB + 0.35, ease(0, 1, cerca)), 26, ease(0, 1, lejos)) * logLerp(9, 1, ease(0, 1, tl.get('llega', p)));
+          const des = ease(0, 1, tl.get('deshace', p));
+          if (t) {
+            t.points.scale.setScalar(1 + 5 * des * des);
+            t.u.uGain.value = 1 - 0.75 * des;
+          }
+          if (borde) borde.points.scale.setScalar(1 + 3 * des * des);
           const dir = V(Math.sin(a), 0.25, Math.cos(a)).normalize();
           const pos = dir.clone().multiplyScalar(d);
           // Near the sphere, look along it (its curve flattens into a horizon of bits), then back in at the Earth.

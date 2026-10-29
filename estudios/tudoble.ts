@@ -2,31 +2,36 @@ import * as THREE from 'three';
 import { Timeline } from './timeline';
 import { enfocar, materia, materiaBuilder, type Nube } from '../src/engine/materia';
 import { lerp } from '../src/engine/math';
-import { deH, h10, h1010, ink, proyectar, slog, texto, type Cuenta, type Rotulo } from './placa';
+import { deH, FONT, h10, h1010, ink, slog, VIOLETA, type Cuenta, type Rotulo } from './placa';
 import { aqui, ease, LUZ_TIERRA, logLerp, mapaTierra, mirar, redCosmica, tierraDatos, TU, V } from './comun';
 import type { Escena, Frame, Instancia } from './tipos';
 
 /**
- * Act I, «Tu doble» (plan v2, approved 28 Oct 2026): the relay from Destino (a bubble that inflates;
- * inside, a universe begins: ours), our observable universe and its horizon, then out past it:
- * volumes like ours in a lattice without end, each with its matter arranged its own way. The ways
- * to arrange a volume are many (~10^10^122) but not infinite; in endless space every one repeats,
- * ours too (Tegmark, 2003: the nearest double ~10^10^29 m away). The camera crosses the copies to the
- * one arranged like ours, dives in, and lands on an Earth like this one: there, you.
+ * The opening and act I, «¿Eres único?», as GUION.md has them (moments 1–9, approved 28 Oct 2026).
  *
- * Units: our observable universe has radius 1. The lattice of volumes has step PASO; the double is
- * a few cells off (the number on the clock is the true distance; the picture is not to scale).
+ * Black, and a teal point that breathes: you. «Estás aquí, mirando esto.» The camera pulls back: the
+ * point is in Santiago, on the Earth at dusk (the title). Further back, the Earth is the centre of all
+ * we can see (it always is), and that ends at the horizon. Beyond, regions like ours, each arranged
+ * its own way; the ways are many but not infinite; in endless space every one repeats, ours too
+ * (Tegmark, 2003: the nearest double ~10^10^29 m away). The camera crosses to the double, dives in,
+ * and lands on an Earth like this one, where a teal point breathes like yours. «¿Cuál de los dos eres
+ * tú?» The Earth goes out and the point is left alone in the black: the bridge to act II, where it
+ * stretches into a thread.
+ *
+ * Units: our observable universe has radius 1 and the Earth (at its centre) R_T. The lattice of
+ * regions has step PASO and the double is a few cells off (the clock carries the true distance).
  */
 
-const CAP = 'I · Tu doble';
 const PASO = 2.7;
 const DOBLE = new THREE.Vector3(3, -1, -4).multiplyScalar(PASO);
-const R_TIERRA = 0.03;
+const R_T = 0.03;
+/** Santiago towards +z; the Sun on the horizon there (dusk). */
+const GIRO = new THREE.Euler(0.3, -0.34, 0);
 
 export const tuDoble: Escena = {
   id: 'doble',
-  nombre: 'Tu doble',
-  estilos: [{ key: '1', nombre: 'Elegida', nota: 'El plan v2: del relevo de Destino al horizonte; más allá, volúmenes como el nuestro; uno ordenado igual; adentro, una Tierra y tú.' }],
+  nombre: 'Aquí · tu doble',
+  estilos: [{ key: '1', nombre: 'Guion', nota: 'Apertura y acto I según el guion: tu punto en lo negro, la Tierra, el horizonte, las regiones como la nuestra, tu doble.' }],
   montar(stage): Instancia {
     const root = stage.root;
     const { camera } = stage;
@@ -42,31 +47,72 @@ export const tuDoble: Escena = {
       return n;
     };
 
-    tl.set({ burbuja: 0, entra: 0, sale: 0, red: 0, cuenta: 0, vuela: 0, zoom: 0, tierra: 0, az: 0 });
-    tl.label('relevo').caption(3.0, 'Un universo empieza', 'Destino terminó con una burbuja que se inflaba y, adentro, un universo que empezaba. Así pudo empezar el nuestro.');
-    tl.to(1.6, { burbuja: 1 });
-    tl.to(1.4, { entra: 1 });
-    tl.label('horizonte').caption(3.2, 'El horizonte', 'Todo lo que vemos termina a 46 000 millones de años luz: más allá, la luz no ha tenido tiempo de llegar. Pero el espacio sigue.');
-    tl.to(3.2, { az: 0.5, cuenta: 1 });
-    tl.label('mas').caption(3.2, 'Más allá', 'Afuera hay otros volúmenes como el nuestro, con la misma física y su materia ordenada a su manera.');
-    tl.to(3.2, { sale: 1, red: 1, cuenta: 2, az: 0.8 });
-    tl.label('maneras').caption(3.2, 'Todas las maneras', 'Las maneras de ordenar la materia en un volumen así son muchísimas, pero no infinitas. Y el espacio, quizá, sí lo es.');
-    tl.to(3.2, { cuenta: 3, az: 1.0 });
-    tl.label('doble').caption(3.6, 'Tu doble', 'Entonces cada manera se repite, también la nuestra: otro volumen igual, con un planeta igual y alguien leyendo esto.');
-    tl.to(3.6, { vuela: 1, cuenta: 4 });
-    tl.label('tu').caption(3.6, 'Tú, otra vez', 'El más cercano estaría a unos 10 elevado a 10²⁹ metros. Un número que no cabe en el universo, pero no es infinito.');
-    tl.to(1.8, { zoom: 1 });
-    tl.to(1.8, { tierra: 1 });
+    // ---------------------------------------------------------------- the moments (GUION.md 1–9)
+    tl.set({ tierra: 0, aleja: 0, titulo: 0, red: 0, sale: 0, cuenta: 0, vuela: 0, zoom: 0, llega: 0, apaga: 0, az: 0 });
+    tl.label('aqui').caption(3.2, 'Aquí', 'Estás aquí, mirando esto.');
+    tl.wait(3.2);
+    tl.label('seguro').caption(3.4, 'Lo único seguro', 'De todo lo que sabes, esto es lo único seguro: que alguien está mirando.');
+    tl.wait(3.4);
+    tl.label('demas').caption(4.6, 'Lo demás', 'Lo demás lo damos por hecho: que eres uno solo, que tu vida es una, que el tiempo pasa, que todo esto es real. Vamos a ver qué queda.');
+    tl.to(1.6, { tierra: 1, aleja: 0.22 });
+    tl.to(3.0, { titulo: 1, aleja: 0.3 });
+    tl.label('lejos').caption(3.4, 'Lejos', 'Ese punto está en un planeta, que gira alrededor de una estrella, en una galaxia entre billones.');
+    tl.to(3.4, { aleja: 1, red: 1, titulo: 2 });
+    tl.label('horizonte').caption(3.4, 'El horizonte', 'Todo lo que podemos ver termina aquí, porque más allá la luz no ha tenido tiempo de llegar. Pero el espacio no termina donde termina la vista.');
+    tl.to(3.4, { az: 0.5, cuenta: 1 });
+    tl.label('otras').caption(3.4, 'Otras como esta', 'Si sigue para siempre, hay otras regiones como la nuestra, cada una con su materia ordenada a su manera.');
+    tl.to(3.4, { sale: 1, cuenta: 2, az: 0.8 });
+    tl.label('maneras').caption(3.0, 'Las maneras', 'Las maneras de ordenar tanta materia son muchísimas. Pero no infinitas.');
+    tl.to(3.0, { cuenta: 3, az: 1.0 });
+    tl.label('doble').caption(4.6, 'Tu doble', 'Y si el espacio sí es infinito, todas se repiten, también esta. En algún lugar hay un planeta igual, y alguien igual a ti leyendo esta misma frase.');
+    tl.to(2.0, { vuela: 1, cuenta: 4 });
+    tl.to(1.4, { zoom: 1 });
+    tl.to(1.2, { llega: 1 });
+    tl.label('cual').caption(3.6, '¿Cuál?', 'Él también cree ser el único. ¿Cuál de los dos eres tú?');
+    tl.wait(3.6);
+    tl.label('puente').caption(2.4, '', 'Pero no hace falta ir tan lejos para encontrar otro tú.');
+    tl.to(2.4, { apaga: 1 });
 
-    // ---- The relay: Destino's bubble (a violet wall that inflates).
-    const bw = materiaBuilder(3);
-    for (let i = 0; i < 9000; i++) {
-      const [x, y, z] = bw.onSphere();
-      bw.push(x, y, z, new THREE.Color(0.79, 0.7, 1.0), 0.012, 0.9);
+    // ---------------------------------------------------------------- the two Earths and you
+    const tierras: { g: THREE.Group; n: Nube | null; yo: Nube }[] = [];
+    for (const centro of [V(0, 0, 0), DOBLE]) {
+      const g = new THREE.Group();
+      g.position.copy(centro);
+      g.scale.setScalar(R_T);
+      g.rotation.copy(GIRO);
+      root.add(g);
+      const b = materiaBuilder(5);
+      const q = aqui().multiplyScalar(1.006);
+      b.push(q.x, q.y, q.z, TU, 0.035, 3.4);
+      const yo = materia(b.data(), { move: 'fuente = 1.0;' });
+      yo.u.uSpread.value = 0;
+      g.add(yo.points);
+      tierras.push({ g, n: null, yo });
     }
-    const pared = add(materia(bw.data(), { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.7;`, uniforms: { uOn: { value: 1 } } }));
+    // The Sun low on Santiago's horizon: dusk there.
+    const S = aqui();
+    const solLocal = S.clone().cross(V(0, 1, 0)).normalize().multiplyScalar(0.98).addScaledVector(S, 0.2).normalize();
+    const listo = mapaTierra().then((img) => {
+      const d = tierraDatos(img, 110000, 29);
+      for (const t of tierras) {
+        t.n = materia(d, {
+          pre: LUZ_TIERRA + /* glsl */ `uniform vec3 uSol, uCam;`,
+          move: /* glsl */ `
+            em *= luzTierra(normalize(position), uSol);
+            em *= smoothstep(0.96, 1.03, dot(normalize(position), uCam));
+            fuente = 0.3;`,
+          uniforms: { uSol: { value: solLocal.clone() }, uCam: { value: V(0, 0, 10) } },
+        });
+        t.n.u.uSpread.value = 0;
+        t.g.add(t.n.points);
+      }
+    });
+    // You, far off: a teal point that stays visible at the centre of all we see.
+    const mb = materiaBuilder(6);
+    mb.push(0, 0, 0, TU, 0.012, 2.6);
+    const marca = add(materia(mb.data(), { move: 'fuente = 1.0;' }));
 
-    // ---- Our observable universe: the cosmic web and its horizon (faint violet shell).
+    // ---------------------------------------------------------------- our observable universe, and the lattice
     const red = redCosmica(2003, 110, (t, out) => out.setRGB(1, 0.92 - 0.12 * t, 0.8 - 0.2 * t));
     const nuestro = add(materia(red.data, { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.6;`, uniforms: { uOn: { value: 0 } } }));
     const bh = materiaBuilder(4);
@@ -74,189 +120,170 @@ export const tuDoble: Escena = {
       const [x, y, z] = bh.onSphere();
       bh.push(x, y, z, new THREE.Color(0.79, 0.7, 1.0), 0.006, 0.4);
     }
-    const horizonteData = bh.data();
-    add(materia(horizonteData, { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.6;`, uniforms: { uOn: { value: 0 } } }));
-    const horizonte = nubes[nubes.length - 1];
-
-    // ---- The lattice: copies of the same web, each turned its own way (its own arrangement). The
-    // double is turned exactly like ours. Copies share our geometry, with their own uniforms.
-    const copias: { points: THREE.Points; u: Nube['u']; pos: THREE.Vector3; esDoble: boolean }[] = [];
-    const matWeb = nuestro.points.material as THREE.ShaderMaterial;
-    const matHor = horizonte.points.material as THREE.ShaderMaterial;
-    const rnd = materiaBuilder(9).r;
-    const celdas: THREE.Vector3[] = [];
-    for (let i = -2; i <= 4; i++) for (let j = -1; j <= 1; j++) for (let k = -5; k <= 1; k++) if (i || j || k) celdas.push(V(i, j, k).multiplyScalar(PASO));
-    // The other volumes are lighter (their points merge at that distance anyway); the double is whole.
+    const horizonte = add(materia(bh.data(), { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.6;`, uniforms: { uOn: { value: 0 } } }));
+    // The other regions: lighter webs (their points merge at that distance); the double is whole and
+    // turned exactly like ours.
     const ligera = redCosmica(77, 45);
     const ligeraWeb = materia(ligera.data, { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.6;`, uniforms: { uOn: { value: 0 } } });
-    const hl = materiaBuilder(6);
+    const hl = materiaBuilder(7);
     for (let i = 0; i < 1800; i++) {
       const [x, y, z] = hl.onSphere();
       hl.push(x, y, z, new THREE.Color(0.79, 0.7, 1.0), 0.01, 0.4);
     }
     const ligeraHor = materia(hl.data(), { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.6;`, uniforms: { uOn: { value: 0 } } });
-    for (const pos of celdas) {
-      const esDoble = pos.distanceTo(DOBLE) < 1e-6;
-      const g = new THREE.Group();
-      g.position.copy(pos);
-      if (!esDoble) g.rotation.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
-      const m = (esDoble ? matWeb : (ligeraWeb.points.material as THREE.ShaderMaterial)).clone();
-      const pts = new THREE.Points(esDoble ? nuestro.points.geometry : ligeraWeb.points.geometry, m);
-      pts.frustumCulled = false;
-      g.add(pts);
-      const mh = (esDoble ? matHor : (ligeraHor.points.material as THREE.ShaderMaterial)).clone();
-      const hp = new THREE.Points(esDoble ? horizonte.points.geometry : ligeraHor.points.geometry, mh);
-      hp.frustumCulled = false;
-      g.add(hp);
-      root.add(g);
-      copias.push({ points: pts, u: m.uniforms as Nube['u'], pos, esDoble });
-      copias.push({ points: hp, u: mh.uniforms as Nube['u'], pos, esDoble });
-    }
+    const copias: { points: THREE.Points; u: Nube['u']; pos: THREE.Vector3; esDoble: boolean }[] = [];
+    const rnd = materiaBuilder(9).r;
+    for (let i = -2; i <= 4; i++)
+      for (let j = -1; j <= 1; j++)
+        for (let k = -5; k <= 1; k++) {
+          if (!i && !j && !k) continue;
+          const pos = V(i, j, k).multiplyScalar(PASO);
+          const esDoble = pos.distanceTo(DOBLE) < 1e-6;
+          const g = new THREE.Group();
+          g.position.copy(pos);
+          if (!esDoble) g.rotation.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
+          for (const [src, light] of [[esDoble ? nuestro : ligeraWeb, ligeraWeb], [esDoble ? horizonte : ligeraHor, ligeraHor]] as const) {
+            void light;
+            const m = (src.points.material as THREE.ShaderMaterial).clone();
+            const pts = new THREE.Points(src.points.geometry, m);
+            pts.frustumCulled = false;
+            g.add(pts);
+            copias.push({ points: pts, u: m.uniforms as Nube['u'], pos, esDoble });
+          }
+          root.add(g);
+        }
 
-    // ---- The Earth inside the double (and you, teal, in Santiago).
-    let tierra: Nube | null = null;
-    const giro = new THREE.Euler(0.3, -0.34, 0);
-    const tGroup = new THREE.Group();
-    tGroup.position.copy(DOBLE);
-    tGroup.scale.setScalar(R_TIERRA);
-    tGroup.rotation.copy(giro);
-    root.add(tGroup);
-    const yo = (() => {
-      const b = materiaBuilder(5);
-      const q = aqui().multiplyScalar(1.006);
-      b.push(q.x, q.y, q.z, TU, 0.035, 3.4);
-      return materia(b.data(), { move: 'fuente = 1.0;' });
-    })();
-    yo.u.uSpread.value = 0;
-    tGroup.add(yo.points);
-    const listo = mapaTierra().then((img) => {
-      tierra = materia(tierraDatos(img, 90000, 29), {
-        pre: LUZ_TIERRA + /* glsl */ `uniform vec3 uSol, uCam;`,
-        move: /* glsl */ `
-          em *= luzTierra(normalize(position), uSol);
-          em *= smoothstep(0.96, 1.03, dot(normalize(position), uCam));
-          fuente = 0.3;`,
-        uniforms: { uSol: { value: V(0.6, 0.25, 0.75).normalize() }, uCam: { value: V(0, 0, 10) } },
-      });
-      tierra.u.uSpread.value = 0;
-      tGroup.add(tierra.points);
-    });
-
+    // ---------------------------------------------------------------- the clock
     const cuentaDe = (p: number): Cuenta => {
       const c = tl.get('cuenta', p);
-      if (c < 0.5) return { pisos: ['1'], linea: 'un universo, el nuestro', h: 1 };
+      if (p >= tl.at('cual')) return { pisos: ['2'], linea: 'tú y él', h: slog(2) };
+      if (c < 0.5) return { pisos: ['1'], linea: 'tú', h: 1 };
       if (c <= 1.02) return { pisos: ['10', '80'], linea: 'protones en todo lo que vemos', h: h10(80) };
       if (c <= 2.02) {
-        const n = Math.round(lerp(1, 124, ease(1, 2, c)));
-        return { pisos: [String(n)], linea: 'volúmenes como el nuestro a la vista', h: slog(n) };
+        const n = Math.round(lerp(1, 146, ease(1, 2, c)));
+        return { pisos: [String(n)], linea: 'regiones como la nuestra a la vista', h: slog(n) };
       }
       if (c <= 3.02) {
-        const h = lerp(slog(124), h1010(122), ease(2, 3, c));
-        return { pisos: c > 2.98 ? ['10', '10', '122'] : deH(h), linea: 'maneras de ordenar un volumen como el nuestro', h };
+        const h = lerp(slog(146), h1010(122), ease(2, 3, c));
+        return { pisos: c > 2.98 ? ['10', '10', '122'] : deH(h), linea: 'maneras de ordenarla', h };
       }
-      const h = h1010(29);
-      return { pisos: ['10', '10', '29'], unidad: 'm', linea: 'hasta tu doble más cercano · estimación', h };
+      return { pisos: ['10', '10', '29'], unidad: 'm', linea: 'hasta tu doble', h: h1010(29) };
     };
 
-    const tmp = V();
     return {
       tl,
       listo,
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        if (!c) return null;
+        const cap = p < tl.at('lejos') ? '' : 'I · ¿Eres único?';
+        return { capitulo: cap, name: c.name, fact: c.fact };
       },
       update(f: Frame) {
         const p = f.p;
-        camera.near = 1e-5;
+        camera.near = 1e-6;
         camera.far = 1e4;
-        camera.fov = 46;
-        const burbuja = tl.get('burbuja', p);
-        const entra = tl.get('entra', p);
+        camera.fov = 44;
+        const t = f.time;
+        const tierraOn = tl.get('tierra', p);
+        const aleja = tl.get('aleja', p);
+        const redOn = tl.get('red', p);
         const sale = tl.get('sale', p);
-        const red = tl.get('red', p);
         const vuela = tl.get('vuela', p);
         const zoom = tl.get('zoom', p);
-        const tk = tl.get('tierra', p);
-        // The relay: the bubble grows from a point to our horizon, then fades as we go in.
-        pared.points.scale.setScalar(lerp(0.02, 1.0, ease(0, 1, burbuja)));
-        pared.u.uOn.value = (1 - ease(0.3, 1, entra)) * ease(0, 0.2, burbuja);
-        nuestro.u.uOn.value = ease(0.2, 1, entra) * (1 - 0.5 * ease(0.6, 1, vuela));
-        horizonte.u.uOn.value = ease(0.5, 1, entra) * (0.4 + 0.6 * ease(0, 1, sale));
+        const llega = tl.get('llega', p);
+        const apaga = tl.get('apaga', p);
+        const respira = 1 + 0.22 * Math.sin(t * 1.5);
+
+        // ---- Visibility.
+        const [mia, otra] = tierras;
+        if (mia.n) mia.n.u.uGain.value = ease(0, 1, tierraOn) * (1 - ease(0.35, 0.6, aleja));
+        mia.yo.u.uGain.value = respira * (1 - ease(0.45, 0.62, aleja));
+        marca.u.uGain.value = ease(0.5, 0.65, aleja) * (1 - ease(0, 0.4, vuela)) * respira;
+        nuestro.u.uOn.value = ease(0.45, 1, redOn) * (1 - 0.5 * ease(0.6, 1, vuela));
+        horizonte.u.uOn.value = ease(0.6, 1, redOn) * (0.45 + 0.55 * ease(0, 1, sale));
         for (const c of copias) {
-          const lejos = c.pos.length();
-          c.u.uOn.value = ease(0, 0.6, red) * (c.esDoble ? lerp(0.4, 1, ease(0.3, 1, vuela)) : 0.28 * (1 - 0.3 * ease(0.5, 1, vuela))) * Math.exp(-c.pos.distanceTo(camera.position) / 14) * (c.esDoble ? 1 - ease(0.5, 1, tk) * 0.9 : 1 - ease(0, 0.6, zoom));
-          void lejos;
+          const base = c.esDoble ? lerp(0.4, 1, ease(0.3, 1, vuela)) * (1 - 0.9 * ease(0, 1, llega)) : 0.28 * (1 - ease(0, 0.6, zoom));
+          c.u.uOn.value = ease(0, 0.6, sale) * base * Math.exp(-c.pos.distanceTo(camera.position) / 14);
           c.u.uFocal.value = f.focal;
           c.u.uMinPx.value = 1.6 * f.dpr;
           c.u.uMaxPx.value = 24 * f.dpr;
-          c.u.uTime.value = f.time;
+          c.u.uTime.value = t;
         }
-        // The Earth appears inside the double as the camera dives into it.
-        if (tierra) tierra.u.uGain.value = ease(0.5, 1, zoom);
-        yo.u.uGain.value = ease(0.3, 1, tk);
+        if (otra.n) otra.n.u.uGain.value = ease(0.4, 1, zoom) * (1 - ease(0, 0.8, apaga));
+        otra.yo.u.uGain.value = ease(0, 1, llega) * respira * (1 - 0.15 * ease(0.8, 1, apaga));
 
-        // ---- The camera: from outside the bubble, in; out past the horizon; across to the double; in; to the Earth.
-        const a = tl.get('az', p) + f.time * 0.008;
-        const fuera = V(Math.sin(a) * 4.5, 0.9, Math.cos(a) * 4.5);
-        const dentro = V(Math.sin(a) * 0.35, 0.08, Math.cos(a) * 0.35);
-        let pos = fuera.clone().lerp(dentro, ease(0, 1, entra));
+        // ---- The camera.
+        const a = tl.get('az', p) + t * 0.006;
+        const S0 = aqui().applyEuler(GIRO);
+        // Over Santiago, close, looking down at the Earth's centre: the point is in the middle.
+        let pos = S0.clone().multiplyScalar(R_T * logLerp(2.3, 117, ease(0, 1, aleja)));
         let look = V(0, 0, 0);
-        // Out: back through the horizon, over the lattice.
+        // Far out, the camera turns a little round all we see.
+        pos.applyAxisAngle(V(0, 1, 0), ease(0.55, 1, aleja) * a * 0.6);
         pos.lerp(V(Math.sin(a) * 6.5, 2.4, Math.cos(a) * 6.5 + 1.5), ease(0, 1, sale));
-        // Across: a long arc to the double (the clock carries the true distance).
         const arco = new THREE.QuadraticBezierCurve3(V(Math.sin(a) * 6.5, 2.4, Math.cos(a) * 6.5 + 1.5), V(DOBLE.x * 0.5, 6, DOBLE.z * 0.3), DOBLE.clone().add(V(1.2, 0.8, 3.2)));
         const v = ease(0, 1, vuela);
         if (v > 0) {
           pos = arco.getPoint(v);
           look = look.lerp(DOBLE, ease(0, 0.6, v));
         }
-        // Into the double, down to its Earth, to you.
         const z = ease(0, 1, zoom);
+        const S1 = aqui().applyEuler(GIRO).multiplyScalar(R_T).add(DOBLE);
         if (z > 0) {
           const t0 = DOBLE.clone().add(V(1.2, 0.8, 3.2));
           const dir = t0.clone().sub(DOBLE).normalize();
-          const d = logLerp(t0.distanceTo(DOBLE), R_TIERRA * 3.2, z);
-          pos = DOBLE.clone().addScaledVector(dir, d);
+          pos = DOBLE.clone().addScaledVector(dir, logLerp(t0.distanceTo(DOBLE), R_T * 6, z));
           look = DOBLE.clone();
         }
-        const k = ease(0, 1, tk);
+        const k = ease(0, 1, llega);
         if (k > 0) {
-          // Close over Santiago, the Earth large in the frame.
-          const sitio = aqui().applyEuler(giro).multiplyScalar(R_TIERRA).add(DOBLE);
-          const sobre = aqui().applyEuler(giro).multiplyScalar(R_TIERRA * 2.1).add(DOBLE).add(V(0, R_TIERRA * 0.4, 0));
+          // Over the double's Santiago, as over ours at the start: its point in the middle.
+          const sobre = aqui().applyEuler(GIRO).multiplyScalar(R_T * 2.3).add(DOBLE);
           pos = pos.lerp(sobre, k);
-          look = look.lerp(sitio, k);
+          look = look.lerp(DOBLE, k);
         }
         mirar(camera, pos, look);
         camera.updateMatrixWorld();
-        if (tierra) {
-          tGroup.updateMatrixWorld();
-          (tierra.u.uCam.value as THREE.Vector3).copy(tGroup.worldToLocal(camera.position.clone()));
-          (tierra.u.uSol.value as THREE.Vector3).copy(camera.position.clone().sub(DOBLE).normalize().add(V(0.3, 0.4, 0)).normalize()).applyQuaternion(tGroup.quaternion.clone().invert());
-          enfocar(tierra, f.focal, f.dpr, f.time);
-          tierra.u.uSizeUnit.value = R_TIERRA;
+        for (const tt of tierras) {
+          tt.g.updateMatrixWorld();
+          if (tt.n) {
+            (tt.n.u.uCam.value as THREE.Vector3).copy(tt.g.worldToLocal(camera.position.clone()));
+            enfocar(tt.n, f.focal, f.dpr, t);
+            tt.n.u.uSizeUnit.value = R_T;
+          }
+          enfocar(tt.yo, f.focal, f.dpr, t);
+          tt.yo.u.uSizeUnit.value = R_T;
         }
-        enfocar(yo, f.focal, f.dpr, f.time);
-        yo.u.uSizeUnit.value = R_TIERRA;
-        for (const n of nubes) enfocar(n, f.focal, f.dpr, f.time);
+        for (const n of nubes) enfocar(n, f.focal, f.dpr, t);
+        void S1;
       },
       placa(g, f) {
-        const u = f.u;
-        // The double, marked while we fly to it; you, on its Earth, at the end.
-        const v = ease(tl.at('doble') + 0.6, tl.at('doble') + 1.4, f.p) * (1 - ease(tl.at('tu') + 0.4, tl.at('tu') + 1.0, f.p));
-        if (v > 0.01) {
-          const s = proyectar(DOBLE, camera, f.W, f.H);
-          if (s.z < 1) texto(g, u, s.x + 18 * u, s.y - 18 * u, 'ordenado como el nuestro', '#73ffd9', v, 11);
+        // The title, over the Earth, in the third moment.
+        const ti = tl.get('titulo', f.p);
+        const a = ease(0, 0.5, ti) * (1 - ease(1.2, 1.8, ti));
+        if (a > 0.01) {
+          const u = f.u;
+          g.save();
+          g.globalAlpha = a;
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          g.shadowColor = 'rgba(0,0,0,0.9)';
+          g.shadowBlur = 20 * u;
+          g.font = FONT.mono(11 * u);
+          g.letterSpacing = `${1.8 * u}px`;
+          g.fillStyle = VIOLETA;
+          g.fillText('HORIZONTES · 04', f.W / 2, f.H * 0.2 - 92 * u);
+          g.letterSpacing = '0px';
+          g.font = FONT.serif(118 * u);
+          g.fillStyle = ink(0.96);
+          g.fillText('Infinito', f.W / 2, f.H * 0.2);
+          g.font = FONT.italic(30 * u);
+          g.fillStyle = ink(0.78);
+          g.fillText('¿Qué hay más allá?', f.W / 2, f.H * 0.2 + 84 * u);
+          g.restore();
         }
-        const t = ease(tl.at('tu') + 2.6, tl.at('tu') + 3.3, f.p);
-        if (t > 0.01) {
-          tmp.copy(aqui()).applyEuler(giro).multiplyScalar(R_TIERRA).add(DOBLE);
-          const s = proyectar(tmp, camera, f.W, f.H);
-          if (s.z < 1) texto(g, u, s.x + 16 * u, s.y - 16 * u, 'tu doble · leyendo esto', '#73ffd9', t, 11);
-        }
-        void ink;
       },
       dispose() {},
     };

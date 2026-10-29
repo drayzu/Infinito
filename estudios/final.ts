@@ -33,7 +33,7 @@ export const final: Escena = {
     { key: '3', nombre: 'La nada', nota: 'Todo se deshace, la cuenta cae a cero. ¿Por qué hay algo en vez de nada? En lo negro, un punto aparece.' },
     { key: '4', nombre: 'Elegida', nota: 'La que eligió Diego: la nada (3); de ella, algo; de ese algo, todos tus tú; y de todos, uno solo mira: tú (2).' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.55;
@@ -49,9 +49,26 @@ export const final: Escena = {
     };
 
     tl.set({ cae: 0, solo: 0, uno: 0, nada: 0, espuma: 0, chispa: 0, dentro: 0, texto: 0, az: 0, acerca: 0, renace: 0, vuelve: 0 });
-    tl.label('todo').caption(3.2, 'Todo lo que hay', 'Tus dobles, tus ramas, los otros universos, los que hay dentro de los agujeros negros, las simulaciones. Infinitos, unos dentro de otros.');
-    tl.to(3.2, { az: 0.4 });
-    if (estilo === 0) {
+    tl.label('todo').caption(viaje ? 3.8 : 3.2, 'Todo lo que hay', viaje ? 'Tus dobles, tus ramas, los otros universos, los que nacen en agujeros negros, los calculados. Infinitos, unos dentro de otros.' : 'Tus dobles, tus ramas, los otros universos, los que hay dentro de los agujeros negros, las simulaciones. Infinitos, unos dentro de otros.');
+    tl.to(viaje ? 3.8 : 3.2, { az: 0.4 });
+    if (estilo === 3 && viaje) {
+      // GUION.md 41–46.
+      tl.label('nada').caption(4.2, 'Nada', 'Ahora quítalo todo: el espacio, el tiempo, las leyes. Lo que queda no es un vacío. Es nada.');
+      tl.to(3.0, { nada: 1, az: 0.6 });
+      tl.wait(1.2);
+      tl.label('algo').caption(3.6, '¿Por qué algo?', '¿Por qué hay algo en vez de nada? Nadie lo sabe. Pero hay algo.');
+      tl.to(3.6, { chispa: 1 });
+      tl.label('tus').caption(5.4, 'Los que miran', 'Y de ese algo salió todo. En algunos rincones, la materia se ordenó hasta poder mirar: tú, y quizá otros. En otro mundo, hecho de otra química. En una máquina que piensa. En algo que todavía no imaginamos.');
+      tl.to(1.0, { chispa: 1.4 });
+      tl.to(4.4, { renace: 1, vuelve: 1 });
+      tl.label('mira').caption(3.4, 'El universo mirándose', 'Cada uno es una manera en que el universo se mira a sí mismo.');
+      tl.wait(3.4);
+      tl.label('uno').caption(3.8, 'Uno mira', 'Y de todos, uno solo está mirando esto, ahora: tú.');
+      tl.to(1.6, { uno: 1 });
+      tl.to(2.2, { acerca: 1 });
+      tl.label('aqui').caption(4.0, 'Todo, desde aquí', '');
+      tl.to(4.0, { texto: 1 });
+    } else if (estilo === 0) {
       tl.label('cae').caption(3.0, 'Hacia un punto', 'Y todo eso, visto desde lo bastante lejos, cabe en un punto de luz.');
       tl.to(3.0, { cae: 1, az: 0.6 });
       tl.label('adentro').caption(3.2, 'El punto', 'Adentro del punto está la espuma del espacio, lo más pequeño que hay. Ahí empieza Espacio, la primera obra.');
@@ -110,6 +127,15 @@ export const final: Escena = {
       else c = new THREE.Color(1, 0.92, 0.78);
       b.push(x * q, y * q, z * q, c, s, l, { kind, delay: b.r() });
     }
+    // Other minds (the journey's end): lights of other colours that come back with every «you».
+    const OTRAS = [new THREE.Color(1, 0.78, 0.4), new THREE.Color(1, 0.5, 0.72), new THREE.Color(0.45, 0.78, 1), new THREE.Color(0.85, 0.75, 1)];
+    if (viaje) {
+      for (let i = 0; i < 1600; i++) {
+        const [x, y, z] = b.onSphere();
+        const q = 1.5 + Math.pow(b.r(), 0.6) * 40;
+        b.push(x * q, y * q, z * q, OTRAS[i % OTRAS.length], 0.085, 1.2, { kind: 3, delay: b.r() });
+      }
+    }
     // The one that stays (way 2): a teal point close to the camera's way.
     const ELEGIDO = V(0.6, 0.25, 3.2);
     b.push(ELEGIDO.x, ELEGIDO.y, ELEGIDO.z, TU, 0.1, 1.6, { kind: 2, delay: 0 });
@@ -126,7 +152,7 @@ export const final: Escena = {
           // Way 2: only the teal ones, then only one.
           float verde = aKind > 0.5 ? 1.0 : 0.0;
           em *= mix(1.0, verde, uSolo);
-          em *= mix(1.0, aKind > 1.5 ? 1.0 : 0.0, uUno);
+          em *= mix(1.0, (aKind > 1.5 && aKind < 2.5) ? 1.0 : 0.0, uUno);
           // Way 3: everything comes apart into nothing, each in its own time.
           float kn = clamp(uNada * 1.6 - aDelay * 0.6, 0.0, 1.0);
           // Way 4: out of the nothing, every «you» comes back (each in its own time).
@@ -194,7 +220,7 @@ export const final: Escena = {
       }
       if (estilo === 3) {
         if (tl.get('uno', p) > 0.5) return { pisos: ['1'], linea: 'tú · el que mira', h: 1 };
-        if (tl.get('renace', p) > 0.4) return { pisos: ['ℵ₀'], linea: 'tus tú · infinitos', h: 5.75 };
+        if (tl.get('renace', p) > 0.4) return { pisos: ['ℵ₀'], linea: viaje ? 'los que miran' : 'tus tú · infinitos', h: 5.75 };
         if (p >= tl.at('algo') + 0.8) {
           const k = tl.get('chispa', p);
           const m = k < 0.2 ? 1 : Math.min(41, 1 + Math.round(40 * ease(0.2, 1, k)));
@@ -223,7 +249,7 @@ export const final: Escena = {
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
         if (!c || !c.fact) return null;
-        return { capitulo: CAP, name: c.name, fact: c.fact };
+        return { capitulo: viaje ? 'Final · ¿Por qué hay algo?' : CAP, name: c.name, fact: c.fact };
       },
       escalera: true,
       update(f: Frame) {

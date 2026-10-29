@@ -41,7 +41,7 @@ export const leyes: Escena = {
     { key: '1', nombre: 'Mar de burbujas', nota: 'En el vacío que se infla nacen burbujas-universo; la cámara entra en cuatro: niebla, agujeros negros, un colapso, y la nuestra.' },
     { key: '2', nombre: 'Perillas', nota: 'Nuestro universo y tres perillas: gravedad, fuerza nuclear, energía oscura. Girar una apenas lo arruina.' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.5;
@@ -77,9 +77,30 @@ export const leyes: Escena = {
     let miradas: THREE.CatmullRomCurve3 | null = null;
     const especiales: { nube: Nube; grupo: THREE.Group }[] = [];
     // The four we dive into, along the way (−z), and the rest around them.
-    const DESTINOS = [V(9, 2, -14), V(-11, -3, -36), V(10, 4, -58), V(-4, 0, -82)];
+    // In the journey ours comes first (act II hands it over: a ball of light in its bubble) and the
+    // others lie ahead.
+    const DESTINOS = viaje ? [V(14, 3, -22), V(-12, -4, -40), V(12, 5, -60), V(0, 0, 0)] : [V(9, 2, -14), V(-11, -3, -36), V(10, 4, -58), V(-4, 0, -82)];
+    let nudo = V();
     const TINTES = [new THREE.Color(0.55, 0.65, 0.85), new THREE.Color(1.0, 0.55, 0.35), new THREE.Color(0.95, 0.45, 0.8), new THREE.Color(1.0, 0.85, 0.55)];
-    if (estilo === 0) {
+    if (estilo === 0 && viaje) {
+      // GUION.md 14–19 and the bridge to act IV.
+      tl.set({ infla: 0, r: 0, colapso: 0, fuera: 0, cuenta: 0, vacio: 0 });
+      tl.label('burbuja').caption(3.8, 'Una burbuja', 'Nuestro universo podría ser una burbuja en algo que se infla sin parar. Y no la única.');
+      tl.to(3.8, { infla: 1, r: 1, vacio: 1 });
+      tl.label('niebla').caption(3.8, 'Otra receta', 'En otras, las reglas serían distintas. En esta no se forman átomos: hay una niebla que nunca se junta.');
+      tl.to(3.8, { r: 3 });
+      tl.label('agujeros').caption(3.0, 'Demasiada gravedad', 'En esta, todo cae en agujeros negros antes de que se encienda una sola estrella.');
+      tl.to(3.0, { r: 5 });
+      tl.label('breve').caption(3.0, 'Breve', 'Esta se cierra sobre sí misma antes de cumplir un segundo.');
+      tl.to(1.2, { r: 6 });
+      tl.to(1.8, { r: 7, colapso: 1 });
+      tl.label('ninguna').caption(4.2, 'Casi ninguna', 'Casi ninguna receta deja que exista alguien que se pregunte esto. Ni nosotros ni nadie: ninguna vida, ninguna mente, de ningún tipo.');
+      tl.to(4.2, { r: 8, cuenta: 1 });
+      tl.label('aqui').caption(3.8, 'Por eso aquí', 'Esta sí. Por eso estás aquí: solo se puede mirar desde un universo que permita mirar.');
+      tl.to(3.8, { r: 9 });
+      tl.label('puente').caption(3.0, '', '¿Y de dónde salió esta?');
+      tl.to(3.0, { r: 11, vacio: 0 });
+    } else if (estilo === 0) {
       tl.set({ infla: 0, r: 0, colapso: 0, fuera: 0, cuenta: 0, vacio: 1 });
       tl.label('inflacion').caption(3.2, 'Inflación eterna', 'Más allá de lo que vemos, el espacio se sigue inflando sin parar. Aquí y allá se detiene, y nace una burbuja: un universo.');
       tl.to(3.2, { infla: 1, r: 0.6 });
@@ -95,10 +116,11 @@ export const leyes: Escena = {
       tl.label('paisaje').caption(3.6, 'El paisaje', 'La teoría de cuerdas admite unas 10⁵⁰⁰ recetas distintas. Casi ninguna da un universo donde alguien pueda preguntarse esto.');
       tl.to(1.8, { r: 5, fuera: 1, cuenta: 1 });
       tl.to(1.8, { cuenta: 2 });
-
+    }
+    if (estilo === 0) {
       const b = materiaBuilder(77);
       const r = b.r;
-      DESTINOS.forEach((c, i) => burbujas.push({ c, R: [6, 6.5, 5.5, 7][i], t0: [0.05, 0.12, 0.2, 0.3][i], tinte: TINTES[i] }));
+      DESTINOS.forEach((c, i) => burbujas.push({ c, R: [6, 6.5, 5.5, 7][i], t0: (viaje ? [0.15, 0.25, 0.35, -1] : [0.05, 0.12, 0.2, 0.3])[i], tinte: TINTES[i] }));
       for (let i = 0; i < 44; i++) {
         const c = V((r() - 0.5) * 90, (r() - 0.5) * 44, 20 - r() * 120);
         if (DESTINOS.some((d) => d.distanceTo(c) < 14) || Math.abs(c.x) < 6) continue;
@@ -171,6 +193,9 @@ export const leyes: Escena = {
         let n: Nube;
         if (i === 3) {
           const red = redCosmica(1987);
+          // The knot the camera goes down to at the end (act IV starts at a black hole).
+          const k = red.nodos.reduce((m, n) => (n.distanceTo(V(0.25, 0.1, 0.55)) < m.distanceTo(V(0.25, 0.1, 0.55)) ? n : m), red.nodos[0]);
+          nudo = DESTINOS[3].clone().addScaledVector(k, 7);
           n = materia(red.data, { move: 'fuente = 0.6;' });
         } else if (i === 2) {
           n = materia(ib.data(), {
@@ -178,7 +203,7 @@ export const leyes: Escena = {
             move: /* glsl */ `
               float c = uColapso;
               p *= max(1.0 - c, 0.0) * (1.0 - c) + 0.002;
-              em *= 1.0 + 9.0 * c * c * step(c, 0.97);
+              em *= (1.0 + 2.5 * c * c * step(c, 0.97)) * (1.0 - 0.7 * c);
               em *= 1.0 - smoothstep(0.97, 1.0, c);
               fuente = 0.8;`,
             uniforms: { uColapso: { value: 0 } },
@@ -191,7 +216,25 @@ export const leyes: Escena = {
       // The way: from the vacuum to each bubble, in, out to the next, and far out at the end.
       const P: THREE.Vector3[] = [V(0, 3, 34)];
       const L: THREE.Vector3[] = [V(0, 0, -20)];
-      for (const d of DESTINOS) {
+      if (viaje) {
+        // Ours, framed as act II leaves its ball; back a little; into the fog, the holes, the brief
+        // one; far out over them all; home; down into ours, to a bright knot.
+        const [A, B, C, D] = DESTINOS;
+        P.length = 0;
+        L.length = 0;
+        P.push(D.clone().add(V(0, 0.6, 54)), D.clone().add(V(12, 7, 70)));
+        L.push(D.clone(), D.clone().add(V(10, 0, -30)));
+        for (const d of [A, B, C]) {
+          P.push(d.clone().add(V(-6, 2, 14)), d.clone().add(V(0.4, 0.2, 0.8)));
+          L.push(d.clone(), d.clone().add(V(0, 0, -4)));
+        }
+        P.push(V(25, 30, 30), D.clone().add(V(-10, 4, 18)));
+        L.push(V(0, 0, -35), D.clone());
+        const dir = nudo.clone().sub(D).normalize();
+        P.push(D.clone().lerp(nudo, 0.5).add(V(0.6, 0.5, 1.2)), nudo.clone().addScaledVector(dir, 1.1));
+        L.push(nudo.clone(), nudo.clone());
+      }
+      for (const d of viaje ? [] : DESTINOS) {
         P.push(d.clone().add(V(-6, 2, 14)));
         L.push(d.clone());
         P.push(d.clone().add(V(0.4, 0.2, 0.8)));
@@ -254,6 +297,11 @@ export const leyes: Escena = {
 
     const cuentaDe = (p: number): Cuenta => {
       const c = tl.get('cuenta', p);
+      if (viaje && p >= tl.at('aqui')) return { pisos: ['1'], linea: 'uno que permite mirar', h: 1 };
+      if (viaje && c > 0.01) {
+        const h = lerp(slog(burbujas.length), h10(500), ease(0, 1, c));
+        return { pisos: deH(h), linea: 'recetas posibles', h };
+      }
       if (estilo === 0 && c < 0.01) {
         const n = Math.max(1, Math.round(burbujas.length * ease(0, 1, tl.get('infla', p))));
         return { pisos: [String(n)], linea: n === 1 ? 'un universo' : 'universos burbuja a la vista', h: slog(n) };
@@ -273,7 +321,7 @@ export const leyes: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'III · ¿Por qué este universo?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const p = f.p;
@@ -287,7 +335,8 @@ export const leyes: Escena = {
             const k = ease(bb.t0, bb.t0 + 0.5, infla);
             const s = bb.R * Math.max(k, 0.001);
             conchas[i].points.scale.setScalar(s);
-            conchas[i].u.uOn.value = k * (i < 4 ? 0.8 : 0.45);
+            const sale = viaje ? 1 - ease(tl.at('puente'), tl.at('puente') + 2.2, p) : 1;
+            conchas[i].u.uOn.value = k * (i < 4 ? 0.8 : 0.45) * sale;
             conchas[i].u.uFocal.value = f.focal;
             conchas[i].u.uMinPx.value = 1.6 * f.dpr;
             conchas[i].u.uMaxPx.value = 24 * f.dpr;
@@ -300,7 +349,7 @@ export const leyes: Escena = {
             e.nube.u.uGain.value = k;
           }
           (especiales[2].nube.u.uColapso as THREE.IUniform).value = tl.get('colapso', p);
-          const u = Math.min(1, tl.get('r', p) / 5);
+          const u = viaje ? Math.min(1, tl.get('r', p) / (ruta.points.length - 1)) : Math.min(1, tl.get('r', p) / 5);
           const pos = ruta.getPoint(u);
           const look = miradas.getPoint(Math.min(1, u + 0.01));
           mirar(camera, pos, look);

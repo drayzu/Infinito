@@ -21,6 +21,54 @@
   - **Simulación:** «definitivamente muñecas» (3). Le gustó la Tierra que se replica de «Tus Tierras» y preguntó si cabía en la simulación. Cabe: un mundo calculado es información, y la información se copia; además, el argumento de Bostrom depende de las copias. La manera 4, `Elegida`, une las muñecas con la Tierra de bits que se copia en 3D hasta formar la red de mundos.
   - **El tiempo no pasa:** empieza con la hélice; de cerca pasa a las rebanadas; al salir de ellas se ve la escena final de la hélice, con las líneas de las estrellas alrededor. Es la manera 3, `Elegida` (`estudios/bloqueElegida.ts`). Todo ocurre en un mismo mundo con el tiempo en +Y, y `uE` estira el tiempo ×12 al acercarse. Diego probó una versión más corta y prefirió volver a la original (25 beats).
 
+## El guion (aprobado el 28 de octubre de 2026)
+
+Diego vio el primer viaje, armado con los estudios encadenados con fundidos, y lo rechazó: «parecen capítulos cerrados y no conectados… debería tener una historia… algo para reflexionar». Después se escribió `GUION.md`:
+- una sola voz en segunda persona;
+- 46 momentos, en el arco certeza → vértigo → duda → disolución → nada → asombro;
+- el punto verde (tú) como protagonista;
+- puentes entre actos en vez de fundidos;
+- un toque de «otras mentes» (otra química, una máquina que piensa).
+
+Diego lo aprobó: «Me encanta mucho. Por favor hazlo… Vamos a hacer arte». **El guion manda sobre los estudios**: los textos, el orden de los momentos, los puentes y las pausas salen de él.
+
+**Cómo se implementa:**
+- **Modo viaje.** Cada estudio recibe `montar(stage, estilo, viaje)`. Con `viaje`, usa la coreografía del guion (sus momentos, su voz, su reloj) y empieza y termina en la imagen que comparte con el acto vecino.
+- **Puentes por imagen compartida.** El último cuadro de un acto y el primero del siguiente muestran lo mismo: un punto verde en lo negro, una bola de luz al centro o puntos sueltos. El cambio en ese instante no se nota, y el fundido desaparece.
+- **El orden de trabajo:**
+  1. apertura + I;
+  2. II;
+  3. III;
+  4. IV;
+  5. V;
+  6. VI (la simulación, el holograma corto y Boltzmann);
+  7. el fractal;
+  8. el final.
+
+  Después vienen el ritmo de Destino, la lámina, el sonido, el idioma y el móvil.
+
+## El viaje según el guion (28 de octubre de 2026, noche)
+
+Todos los actos tienen ya su modo viaje (`montar(stage, estilo, true)`). El viaje no tiene portada ni fundidos, y dura unos 208 beats (~8 min con A):
+- **Apertura + I** (`tudoble.ts`): el punto en lo negro; Santiago al atardecer y el título; lo observable con la Tierra al centro; las regiones como la nuestra; tu doble. Termina con el punto del doble solo en lo negro.
+- **II** (ramas 4): empieza en ese punto y termina con el árbol en su burbuja, como una bola de luz.
+- **III** (leyes 1): empieza en la nuestra, vista de lejos. Recorre la niebla, los agujeros negros y la breve; sale lejos («casi ninguna») y vuelve a la nuestra. Termina en un nudo brillante, con el resto en negro.
+- **IV** (agujero 1): cae en el agujero, rebota y nace un universo. Termina en una de sus estrellas, una luz al centro.
+- **V** (bloque 3): empieza lejos, con el Sol como un punto. Termina en la Tierra, un punto azul solo.
+- **VI:**
+  - la simulación 4 empieza con la Tierra lejos y termina en las muñecas;
+  - el holograma, corto, llega de lejos y se deshace en puntos;
+  - Boltzmann termina con los cerebros deshechos en puntos sueltos.
+- **Al fondo** (fractal): los puntos sueltos se juntan en el Mandelbrot y al final se dispersan.
+- **Final** (4):
+  - la nada y algo;
+  - «los que miran»: los puntos verdes y luces de otros colores, que son otras mentes;
+  - «el universo mirándose», «uno mira» y «Todo, desde aquí».
+
+  El último cuadro es el punto del principio.
+
+Capturas: `node tools/hojas.mjs viaje 0 60` (la hoja) y `node tools/hojas.mjs cuadro <beat> 0` (un cuadro).
+
 ## El viaje (fase 1, desde el 28 de octubre de 2026)
 
 `index.html` + `src/main.ts`, en http://localhost:5203/. Es un solo scroll por las maneras elegidas, en el orden de los actos:

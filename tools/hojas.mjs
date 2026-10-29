@@ -32,7 +32,18 @@ ws.addEventListener('message', (e) => {
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 await send('Runtime.enable');
 for (let i = 0; i < args.length; i += 3) {
-  const [m, s, n] = [args[i], Number(args[i + 1]), Number(args[i + 2])];
+  // A way written «4v» is that way as the journey has it (GUION.md).
+  const viaje = String(args[i + 1]).endsWith('v');
+  const [m, s, n] = [args[i], parseInt(args[i + 1], 10), Number(args[i + 2])];
+  if (m === 'cuadro') {
+    // One frame of the journey at beat s, full size, into docs/viaje/cuadro-<s>.jpg.
+    await send('Page.navigate', { url: 'http://localhost:5203/index.html?debug&cap=1600x900' });
+    await sleep(6000);
+    const b = args[i + 1];
+    const r = await send('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => { await viaje.listo(); await viaje.hoja('docs/viaje/cuadro-${b}.jpg', [${b}], 1, 1600); return 'ok'; })()` });
+    console.log(`cuadro ${b}: ${r.result?.result?.value ?? JSON.stringify(r.result?.exceptionDetails ?? r)}`);
+    continue;
+  }
   if (m === 'viaje') {
     // The whole journey: n frames spread over it (s is ignored), into docs/viaje/viaje.jpg.
     await send('Page.navigate', { url: 'http://localhost:5203/index.html?debug&cap=1600x900' });
@@ -45,12 +56,12 @@ for (let i = 0; i < args.length; i += 3) {
     console.log(`viaje: ${r.result?.result?.value ?? JSON.stringify(r.result?.exceptionDetails ?? r)}`);
     continue;
   }
-  await send('Page.navigate', { url: `http://localhost:5203/estudios/index.html?m=${m}&s=${s}&debug&cap=1600x900` });
+  await send('Page.navigate', { url: `http://localhost:5203/estudios/index.html?m=${m}&s=${s}&debug&cap=1600x900${viaje ? '&viaje' : ''}` });
   await sleep(2500);
   const r = await send('Runtime.evaluate', {
     awaitPromise: true,
     returnByValue: true,
-    expression: `(async () => { await estudio.inst?.listo; const L = estudio.length; const b = Array.from({ length: ${n} }, (_, i) => +(0.3 + i * (L - 0.3) / ${n - 1}).toFixed(2)); await estudio.hoja('docs/estudios/${m}-${s}.jpg', b, 4, 480); return L; })()`,
+    expression: `(async () => { await estudio.inst?.listo; const L = estudio.length; const b = Array.from({ length: ${n} }, (_, i) => +(0.3 + i * (L - 0.3) / ${n - 1}).toFixed(2)); await estudio.hoja('docs/estudios/${m}-${s}${viaje ? 'v' : ''}.jpg', b, 4, 480); return L; })()`,
   });
   console.log(`${m}-${s}: ${r.result?.result?.value ?? JSON.stringify(r.result?.exceptionDetails ?? r)}`);
 }

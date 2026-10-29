@@ -23,18 +23,29 @@ export const fractal: Escena = {
   id: 'fractal',
   nombre: 'El fractal',
   estilos: [{ key: '1', nombre: 'Destello', nota: 'Un buceo corto en el conjunto de Mandelbrot hecho de puntos: una regla de una línea con detalle sin fin.' }],
-  montar(stage): Instancia {
+  montar(stage, _estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.5;
     stage.bloom.radius = 0.6;
     stage.bloom.threshold = 0.45;
     const tl = new Timeline();
-    tl.set({ z: 0, az: 0 });
-    tl.label('regla').caption(3.0, 'Una regla de una línea', '¿Y si al fondo de todo solo hay matemática? Esta forma sale de una sola regla: multiplicar un número por sí mismo y sumarle otro, una y otra vez.');
-    tl.to(3.0, { z: 0.15 });
-    tl.label('fondo').caption(4.0, 'Sin fondo', 'Y por más que te acerques, el detalle no se acaba. Nadie lo inventó: estaba ahí.');
-    tl.to(4.0, { z: 1 }, (t) => t * t * (3 - 2 * t));
+    tl.set({ z: 0, az: 0, arma: viaje ? 0 : 1 });
+    if (viaje) {
+      // GUION.md 38–39: the loose lights Boltzmann leaves gather into the set; at the end they scatter
+      // again (the final starts among loose lights).
+      tl.label('regla').caption(3.8, 'Una regla', 'Quizá al fondo de todo solo hay matemática. Esta forma sale de una regla de una línea.');
+      tl.to(2.0, { arma: 1 });
+      tl.to(1.8, { z: 0.15 });
+      tl.label('fondo').caption(4.2, 'Sin fondo', 'Y por más que te acerques, el detalle no se acaba. Nadie la inventó: estaba ahí.');
+      tl.to(4.2, { z: 1 }, (t) => t * t * (3 - 2 * t));
+      tl.label('puente').caption(2.8, '', 'Pero ni eso es seguro.');
+      tl.to(2.8, { arma: 0 });
+    }
+    if (!viaje) tl.label('regla').caption(3.0, 'Una regla de una línea', '¿Y si al fondo de todo solo hay matemática? Esta forma sale de una sola regla: multiplicar un número por sí mismo y sumarle otro, una y otra vez.');
+    if (!viaje) tl.to(3.0, { z: 0.15 });
+    if (!viaje) tl.label('fondo').caption(4.0, 'Sin fondo', 'Y por más que te acerques, el detalle no se acaba. Nadie lo inventó: estaba ahí.');
+    if (!viaje) tl.to(4.0, { z: 1 }, (t) => t * t * (3 - 2 * t));
 
     // The grid: a sheet of points that fills the view, a little jittered (no moiré).
     const b = materiaBuilder(5);
@@ -42,7 +53,10 @@ export const fractal: Escena = {
       for (let i = 0; i < GX; i++) {
         const x = ((i + 0.5 + (b.r() - 0.5) * 0.3) / GX - 0.5) * 2 * (16 / 9);
         const y = ((j + 0.5 + (b.r() - 0.5) * 0.3) / GY - 0.5) * 2;
-        b.push(x, y, 0, new THREE.Color(1, 1, 1), 2.2 / GY, 1);
+        // In the journey each point comes from somewhere loose round the camera.
+        const [fx, fy, fz] = b.onSphere();
+        const q = 1.5 + b.r() * 4;
+        b.push(x, y, 0, new THREE.Color(1, 1, 1), 2.2 / GY, 1, viaje ? { from: [fx * q, fy * q, 1.2 + fz * q], delay: b.r() } : {});
       }
     const hoja = materia(b.data(), {
       pre: /* glsl */ `uniform vec2 uCentro; uniform float uEscala;`,
@@ -65,11 +79,12 @@ export const fractal: Escena = {
         vec3 col = mix(vec3(0.35, 0.22, 0.85), vec3(0.95, 0.9, 1.0), smoothstep(0.0, 0.5, t));
         col = mix(col, vec3(1.0, 0.75, 0.35), smoothstep(0.5, 1.0, t));
         float banda = sin(3.14159 * fract(mu * 0.06));
-        em = col * esc * 0.6 * (0.12 + 0.88 * banda * banda);
+        // Far outside (it escapes at once) stays dark: the light gathers along the edge.
+        em = col * esc * 0.6 * (0.12 + 0.88 * banda * banda) * smoothstep(2.0, 24.0, it);
         fuente = 1.0;`,
       uniforms: { uCentro: { value: CENTRO.clone() }, uEscala: { value: 1.2 } },
     });
-    hoja.u.uSpread.value = 0;
+    hoja.u.uSpread.value = viaje ? 0.8 : 0;
     root.add(hoja.points);
 
     const escala = (p: number) => logLerp(1.25, 1.6e-5, ease(0, 1, tl.get('z', p)));
@@ -84,7 +99,7 @@ export const fractal: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'Al fondo · ¿Solo matemática?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const p = f.p;
@@ -96,6 +111,7 @@ export const fractal: Escena = {
         const k = ease(0, 0.4, tl.get('z', p));
         (hoja.u.uCentro.value as THREE.Vector2).set(-0.6, 0).lerp(CENTRO, k);
         hoja.u.uEscala.value = s;
+        hoja.u.uK.value = tl.get('arma', p);
         const a = Math.sin(f.time * 0.05) * 0.03;
         mirar(camera, V(Math.sin(a) * 2.42, 0, Math.cos(a) * 2.42), V(0, 0, 0));
         enfocar(hoja, f.focal, f.dpr, f.time);

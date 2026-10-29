@@ -145,7 +145,7 @@ export const ramas: Escena = {
     { key: '3', nombre: 'Tus Tierras', nota: 'La Tierra misma se divide: una, dos, cuatro… cada una con un punto verde donde estás tú.' },
     { key: '4', nombre: 'Elegida', nota: 'La que eligió Diego: por dentro (1), más larga, en el árbol curvo (2). Al final mira atrás.' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = estilo === 2 ? 0.4 : 0.6;
@@ -157,8 +157,24 @@ export const ramas: Escena = {
     const curvo = estilo === 1 || estilo === 3;
 
     // ---- The choreography (beats). Track `t`: growth time of the tree (ways 1, 2) or generation (way 3).
-    tl.set({ t: estilo === 2 ? 0 : 0.14, out: 0, mundos: 0 });
-    if (estilo === 3) {
+    tl.set({ t: estilo === 2 ? 0 : viaje ? 0.015 : 0.14, out: 0, mundos: 0, mira: 1, burbuja: 0, lejos: 0 });
+    if (viaje) {
+      // GUION.md 10–13 and the bridge to act III. It starts on the point act I ends on: the camera
+      // looks straight at the tip, then settles behind it.
+      tl.set({ mira: 0 });
+      tl.label('uno').caption(3.4, 'Un hilo', 'Tu vida parece un hilo: una sola historia, la que recuerdas.');
+      tl.to(1.4, { mira: 1, t: 0.22 });
+      tl.to(2.0, { t: 0.72 });
+      tl.label('elige').caption(3.8, 'El universo no elige', 'Pero cuando algo diminuto se decide, un átomo que se desintegra o no, puede que el universo no elija. Que siga por los dos caminos.');
+      tl.to(3.8, { t: 1.45 });
+      tl.label('vidas').caption(6.0, 'Todas tus vidas', 'Pasa en cada átomo, a cada instante. En cada rama hay un tú, y cada uno siente que la suya es la única.');
+      tl.to(6.0, { t: 3.95 });
+      tl.label('atras').caption(4.4, 'Mirar atrás', 'Cada vida que pudiste vivir estaría ahí, las que elegiste y las que no. Esta es solo una.');
+      tl.to(1.8, { t: 4.2, out: 0.6 });
+      tl.to(2.6, { t: 4.4, out: 1, mundos: 1 });
+      tl.label('puente').caption(2.8, '', 'Y todo ese árbol cabe en un solo universo.');
+      tl.to(2.8, { lejos: 1, burbuja: 1 });
+    } else if (estilo === 3) {
       tl.label('uno').caption(2.8, 'Una historia', 'Hasta ahora tu vida es un hilo: una sola historia, la que recuerdas.');
       tl.to(2.8, { t: 0.72 });
       tl.label('elige').caption(3.2, 'El universo no elige', 'Pero cuando un átomo decae o no decae, el universo no se queda con uno de los dos caminos: sigue por ambos.');
@@ -180,6 +196,7 @@ export const ramas: Escena = {
       tl.to(1.8, { t: estilo === 2 ? 12 : estilo === 1 ? 4.5 : 4.95, out: 1, mundos: 1 });
     }
 
+    let burbuja: Nube | null = null;
     // ---- Ways 1 and 2: the tree.
     let nube: Nube | null = null;
     let tree: ReturnType<typeof arbol> | null = null;
@@ -200,6 +217,17 @@ export const ramas: Escena = {
       });
       nube.u.uSpread.value = 0;
       root.add(nube.points);
+      if (viaje) {
+        const bb = materiaBuilder(44);
+        for (let i = 0; i < 9000; i++) {
+          const [x, y, z] = bb.onSphere();
+          const r = tree.radio * 1.08;
+          bb.push(tree.centro.x + x * r, tree.centro.y + y * r, tree.centro.z + z * r, new THREE.Color(0.79, 0.7, 1.0), 0.03, 0.9);
+        }
+        burbuja = materia(bb.data(), { pre: `uniform float uOn;`, move: `em *= uOn; fuente = 0.7;`, uniforms: { uOn: { value: 0 } } });
+        burbuja.u.uSpread.value = 0;
+        root.add(burbuja.points);
+      }
     } else {
       gens3 = hTree(S3);
       listo = mapaTierra().then((img) => {
@@ -276,6 +304,7 @@ export const ramas: Escena = {
     };
 
     const cuentaDe = (p: number): Cuenta => {
+      if (viaje && p < tl.at('elige') + 0.6) return { pisos: ['1'], linea: 'vida', h: 1 };
       const t = tl.get('t', p);
       const out = tl.get('out', p);
       const n = estilo === 2 ? Math.pow(2, Math.ceil(t - 0.02)) : vivas(t);
@@ -283,7 +312,7 @@ export const ramas: Escena = {
       // ~10⁸⁰ particles × ~10¹⁰ decoherences per second each → 2^(10⁹⁰) ≈ 10^10^89.5).
       const big = ease(0.55, 1, out);
       const h = lerp(slog(n), h1010(89.48), big);
-      const linea = big > 0.97 ? 'ramas en un segundo del universo · estimación gruesa' : estilo === 2 ? 'Tierras · cada una con un tú' : 'ramas · cada una con un tú';
+      const linea = viaje ? (big > 0.97 ? 'tus vidas en un segundo · estimación' : 'tus vidas') : big > 0.97 ? 'ramas en un segundo del universo · estimación gruesa' : estilo === 2 ? 'Tierras · cada una con un tú' : 'ramas · cada una con un tú';
       return { pisos: deH(h), linea, h };
     };
 
@@ -295,7 +324,7 @@ export const ramas: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'II · ¿Tu vida es una sola?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const t = tl.get('t', f.p);
@@ -311,14 +340,23 @@ export const ramas: Escena = {
             const side = V(0, 1, 0).cross(tmpD).normalize();
             const up = tmpD.clone().cross(side).normalize();
             const ride = tmpP.clone().addScaledVector(tmpD, -0.55 * sc).addScaledVector(up, 0.2 * sc).addScaledVector(side, 0.12 * sc);
-            const look = tmpP.clone().addScaledVector(tmpD, 0.6 * sc);
+            const look = tmpP.clone().lerp(tmpP.clone().addScaledVector(tmpD, 0.6 * sc), ease(0, 1, tl.get('mira', f.p)));
             // Turning round: from behind the tip to out in front of the tree, looking back at it.
             const o = ease(0, 1, out);
             const centro = estilo === 0 ? V(0, 0, -2.2) : tree.centro.clone();
             const a = 0.6 + f.time * 0.02;
             const lejos = estilo === 0 ? V(Math.sin(a) * 5.2, 2.4, -4.5) : V(Math.sin(a), 0.42, Math.cos(a)).normalize().multiplyScalar(tree.radio * 1.55);
             const fuera = tmpP.clone().add(V(Math.sin(a) * 1.4, 0.7, -1.8)).lerp(centro.clone().add(lejos), ease(0.4, 1, out));
-            mirar(camera, ride.lerp(fuera, o), look.lerp(centro, ease(0, 0.8, out)), up.lerp(V(0, 1, 0), o).normalize());
+            const pos = ride.lerp(fuera, o);
+            const lj = ease(0, 1, tl.get('lejos', f.p));
+            // Far off, the tree is a ball of light: dimmer, so it does not burn white.
+            nube.u.uGain.value = 1 - 0.55 * lj;
+            if (lj > 0) pos.lerp(centro.clone().add(lejos.clone().multiplyScalar(5.5)), lj);
+            mirar(camera, pos, look.lerp(centro, ease(0, 0.8, out)), up.lerp(V(0, 1, 0), o).normalize());
+            if (burbuja) {
+              burbuja.u.uOn.value = ease(0.3, 1, tl.get('burbuja', f.p));
+              enfocar(burbuja, f.focal, f.dpr, f.time);
+            }
           } else {
             // Outside: from close to the root, out as the tree grows, slowly round it.
             const grow = Math.min(t, tree.fin);

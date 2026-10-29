@@ -33,7 +33,7 @@ export const agujero: Escena = {
     { key: '1', nombre: 'Caer', nota: 'La cámara cae por el horizonte; adentro, la materia rebota en un destello y nace un universo nuevo a tu alrededor.' },
     { key: '2', nombre: 'Sin fondo', nota: 'Un universo con agujeros negros; dentro de uno, otro universo entero, con los suyos; y dentro de uno de esos, otro.' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.5;
@@ -53,15 +53,34 @@ export const agujero: Escena = {
     let caida: Nube | null = null;
     let nuevo: Nube | null = null;
     let destello: Nube | null = null;
+    let estrella: Nube | null = null;
+    const estrellaPos = V();
     if (bh) {
       root.add(bh.mesh);
       bh.u.uDiskIn.value = 3;
       bh.u.uDiskOut.value = 16;
       bh.u.uBand.value = 0.6;
-      tl.set({ d: 0, dentro: 0, cae: 0, rebote: 0, nace: 0, sale: 0, cuenta: 0 });
-      tl.label('agujero').caption(3.0, 'Un agujero negro', 'En el universo observable hay unos 4 × 10¹⁹ agujeros negros de estrellas. Lo que cae en ellos no vuelve a salir.');
-      tl.to(3.0, { d: 0.55, cuenta: 1 });
-      tl.label('horizonte').caption(3.0, 'El horizonte', 'Al cruzar el borde, todos los caminos llevan hacia adentro. Lo que cae contigo se estira hacia el centro.');
+      tl.set({ d: 0, dentro: 0, cae: 0, rebote: 0, nace: 0, sale: 0, cuenta: 0, puente: 0 });
+      if (viaje) {
+        // GUION.md 20–23 and the bridge to act V.
+        tl.label('agujero').caption(3.4, 'Un agujero negro', 'En nuestro universo hay unos cuarenta trillones de agujeros negros. Lo que cae en ellos no vuelve.');
+        tl.to(3.4, { d: 0.55, cuenta: 1 });
+        tl.label('horizonte').caption(3.0, 'Adentro', 'Al cruzar el borde, todos los caminos llevan al centro.');
+        tl.to(1.2, { d: 1 });
+        tl.to(0.25, { dentro: 1 });
+        tl.to(1.55, { cae: 1 });
+        tl.label('rebote').caption(3.4, 'Otro comienzo', 'Quizá en el centro no hay un final, sino un rebote. Y de ese rebote, un universo nuevo.');
+        tl.to(0.7, { rebote: 1, cae: 1.3 });
+        tl.to(2.7, { nace: 1 });
+        tl.label('dentro').caption(3.8, 'Quizá el nuestro', 'Quizá el nuestro empezó así, adentro de un agujero negro de otro universo. Un universo hijo de otro.');
+        tl.to(3.8, { sale: 1, cuenta: 2 });
+        tl.label('puente').caption(3.2, '', 'Y si todo empieza en algún momento… ¿qué es un momento?');
+        tl.to(3.2, { puente: 1 });
+      }
+      if (!viaje) tl.label('agujero').caption(3.0, 'Un agujero negro', 'En el universo observable hay unos 4 × 10¹⁹ agujeros negros de estrellas. Lo que cae en ellos no vuelve a salir.');
+      if (!viaje) tl.to(3.0, { d: 0.55, cuenta: 1 });
+      if (!viaje) tl.label('horizonte').caption(3.0, 'El horizonte', 'Al cruzar el borde, todos los caminos llevan hacia adentro. Lo que cae contigo se estira hacia el centro.');
+      if (!viaje) {
       tl.to(1.2, { d: 1 });
       tl.to(0.25, { dentro: 1 });
       tl.to(1.55, { cae: 1 });
@@ -70,6 +89,7 @@ export const agujero: Escena = {
       tl.to(2.3, { nace: 1 });
       tl.label('dentro').caption(3.4, 'Un universo adentro', 'Con su propio espacio, sus galaxias y sus agujeros negros. Quizá el nuestro empezó así, dentro de un agujero negro de otro universo.');
       tl.to(3.4, { sale: 1, cuenta: 2 });
+      }
 
       // Matter falling with the camera: streaks along the way in (a tube round the path).
       const b = materiaBuilder(12);
@@ -125,6 +145,11 @@ export const agujero: Escena = {
         }),
       );
       nuevo.u.uSpread.value = 0.8;
+      const k = red.nodos.reduce((m, n) => (n.distanceTo(V(0.3, 0.15, 0.45)) < m.distanceTo(V(0.3, 0.15, 0.45)) ? n : m), red.nodos[0]);
+      estrellaPos.copy(k);
+      const eb = materiaBuilder(16);
+      eb.push(k.x, k.y, k.z, new THREE.Color(1.0, 0.8, 0.55), 0.004, 3.0);
+      estrella = add(materia(eb.data(), { move: 'fuente = 1.0;' }));
     }
 
     // ================================================================ way 2: no bottom
@@ -173,6 +198,7 @@ export const agujero: Escena = {
       const c = tl.get('cuenta', p);
       if (estilo === 0) {
         if (p >= tl.at('rebote') && p < tl.at('dentro')) return { pisos: ['1'], linea: 'un universo nuevo', h: 1 };
+        if (viaje && p >= tl.at('puente')) return { pisos: ['1'], linea: 'una estrella', h: 1 };
         if (c < 0.01) return { pisos: ['1'], linea: 'un agujero negro', h: 1 };
         const l = L19 * ease(0, 1, Math.min(c, 1));
         return { pisos: l > 19 ? ['4 × 10', '19'] : deH(h10(l)), linea: p >= tl.at('dentro') ? 'agujeros negros en él · cada uno, otro universo' : 'agujeros negros de estrellas · universo observable', h: h10(l) };
@@ -188,7 +214,7 @@ export const agujero: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'IV · ¿De dónde salió?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const p = f.p;
@@ -226,7 +252,20 @@ export const agujero: Escena = {
             // In the new universe: from its middle, out until it is whole in front of us.
             const r = lerp(0.05, 2.7, ease(0, 1, sale));
             const a = 0.3 + f.time * 0.01 + sale * 0.6;
-            mirar(camera, V(Math.sin(a) * r, 0.3 * r, Math.cos(a) * r), V(0, 0, 0));
+            const pos = V(Math.sin(a) * r, 0.3 * r, Math.cos(a) * r);
+            const look = V(0, 0, 0);
+            // The bridge: down to one of its stars, until it is a light in the middle of the black.
+            const pu = ease(0, 1, tl.get('puente', p));
+            if (pu > 0) {
+              pos.lerp(estrellaPos.clone().addScaledVector(pos.clone().sub(estrellaPos).normalize(), 0.06), pu);
+              look.lerp(estrellaPos, ease(0, 0.4, pu));
+            }
+            nuevo.u.uGain.value = 1 - 0.85 * ease(0.4, 1, pu);
+            mirar(camera, pos, look);
+          }
+          if (estrella) {
+            estrella.u.uGain.value = ease(0, 0.6, tl.get('puente', p));
+            estrella.u.uSizeUnit.value = lerp(1, 5, ease(0.3, 1, tl.get('puente', p)));
           }
         } else if (red2) {
           // The infinite zoom: level k is drawn in its own frame (×1); k+1 sits at P scaled by S; k+2

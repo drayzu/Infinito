@@ -32,7 +32,7 @@ const POR_ANO = 24;
 const K0 = 24;
 const E_MAX = 12;
 
-export function montarElegida(stage: Stage): Instancia {
+export function montarElegida(stage: Stage, viaje = false): Instancia {
   const root = stage.root;
   const { camera } = stage;
   stage.bloom.strength = 0.5;
@@ -48,26 +48,55 @@ export function montarElegida(stage: Stage): Instancia {
 
   // ---------------------------------------------------------------- the choreography
   const tl = new Timeline();
-  tl.set({ ahora: -0.15, E: 1, bq: 0, reb: 0, hel: 1, lado: 0, corte: 0, hojas: 0, vida: 0, todo: 0, c1: 0, c2: 0, c3: 0, c4: 0, c5: 0 });
-  tl.label('ahora').caption(2.4, 'Ahora', 'La Tierra gira alrededor del Sol y tú sientes que el tiempo pasa: el pasado ya no está y el futuro todavía no.');
-  tl.to(2.4, { ahora: 0.55 });
-  tl.label('direccion').caption(3.0, 'El tiempo es una dirección', 'Para Einstein, el tiempo es una dirección más, como arriba o adelante. Dibujado así, el camino de la Tierra es un resorte.');
+  tl.set({ ahora: -0.15, E: 1, bq: 0, reb: 0, hel: 1, lado: 0, corte: 0, hojas: 0, vida: 0, todo: 0, c0: viaje ? 0 : 1, c1: 0, c2: 0, c3: 0, c4: 0, c5: 0, c6: 0, apaga: 0 });
+  // The voice: GUION.md 24–29 in the journey; the study's own words otherwise.
+  const T = viaje
+    ? {
+        ahora: ['Ahora', 'La Tierra da vueltas al Sol y sientes que el tiempo pasa: el pasado ya no está y el futuro todavía no.'],
+        direccion: ['Una dirección', 'Pero para la física, el tiempo es una dirección más. Dibujado así, el camino de la Tierra es un resorte.'],
+        instante: ['Instantes', 'De cerca, el resorte está hecho de instantes, como los cuadros de una película.'],
+        paginas: ['Pasar', 'Sentir que el tiempo pasa es ir de uno al siguiente.'],
+        bloque: ['El bloque', 'Pero todos los cuadros están ahí, a la vez.'],
+        otro: ['Otro ahora', 'Y para alguien que se mueve, el ahora corta el bloque en otro ángulo: su presente no es el tuyo.'],
+        vida: ['Tu vida', 'Tu vida es un tramo de ese resorte: tu nacimiento en un extremo, tu muerte en el otro.'],
+        todo: ['Para siempre', 'Y nada dice que solo exista el ahora. Cada instante tuyo, este también, está ahí para siempre.'],
+      }
+    : {
+        ahora: ['Ahora', 'La Tierra gira alrededor del Sol y tú sientes que el tiempo pasa: el pasado ya no está y el futuro todavía no.'],
+        direccion: ['El tiempo es una dirección', 'Para Einstein, el tiempo es una dirección más, como arriba o adelante. Dibujado así, el camino de la Tierra es un resorte.'],
+        instante: ['Un instante', 'De cerca, el resorte está hecho de instantes. Cada uno es un cuadro: el Sol, la Tierra y las estrellas, quietos.'],
+        paginas: ['Pasar las páginas', 'Sentir que el tiempo pasa es ir de un cuadro al siguiente. Pero ¿y si todos los cuadros existen, y solo los recorres?'],
+        bloque: ['El bloque', 'Vistos de lado, los instantes forman un bloque. La Tierra deja un resorte, el Sol una columna, cada estrella una línea.'],
+        otro: ['Otro ahora', 'Para alguien que se mueve, el ahora corta el bloque en otro ángulo, y su presente incluye parte de tu futuro. Ningún corte es el verdadero.'],
+        vida: ['Tu vida', 'Tu vida es un tramo de ese resorte: unas ochenta vueltas. Tu nacimiento en un extremo, tu muerte en el otro.'],
+        todo: ['Todo a la vez', 'Y nada en las ecuaciones dice que solo exista el ahora. El tramo entero está ahí, de una vez: cada instante de tu vida, para siempre.'],
+      };
+  tl.label('ahora').caption(viaje ? 3.4 : 2.4, T.ahora[0], T.ahora[1]);
+  // In the journey it starts far, the Sun a light in the middle (act IV leaves it so), and comes in.
+  if (viaje) tl.to(1.4, { c0: 1, ahora: 0.15 });
+  tl.to(viaje ? 2.0 : 2.4, { ahora: 0.55 });
+  tl.label('direccion').caption(3.0, T.direccion[0], T.direccion[1]);
   tl.to(3.0, { ahora: 1.0, bq: 1, c1: 1 });
-  tl.label('instante').caption(3.0, 'Un instante', 'De cerca, el resorte está hecho de instantes. Cada uno es un cuadro: el Sol, la Tierra y las estrellas, quietos.');
+  tl.label('instante').caption(3.0, T.instante[0], T.instante[1]);
   tl.to(3.0, { E: E_MAX, c2: 1, reb: 1, hel: 0.12 });
-  tl.label('paginas').caption(3.2, 'Pasar las páginas', 'Sentir que el tiempo pasa es ir de un cuadro al siguiente. Pero ¿y si todos los cuadros existen, y solo los recorres?');
+  tl.label('paginas').caption(3.2, T.paginas[0], T.paginas[1]);
   tl.to(3.2, { ahora: 3.9 }, (t) => t * t * (3 - 2 * t));
-  tl.label('bloque').caption(3.0, 'El bloque', 'Vistos de lado, los instantes forman un bloque. La Tierra deja un resorte, el Sol una columna, cada estrella una línea.');
+  tl.label('bloque').caption(3.0, T.bloque[0], T.bloque[1]);
   tl.to(3.0, { c3: 1, lado: 1 });
-  tl.label('otro').caption(3.4, 'Otro ahora', 'Para alguien que se mueve, el ahora corta el bloque en otro ángulo, y su presente incluye parte de tu futuro. Ningún corte es el verdadero.');
+  tl.label('otro').caption(3.4, T.otro[0], T.otro[1]);
   tl.to(1.4, { corte: 1, hojas: 1 });
   tl.to(2.0, { corte: 2 });
-  tl.label('vida').caption(3.6, 'Tu vida', 'Tu vida es un tramo de ese resorte: unas ochenta vueltas. Tu nacimiento en un extremo, tu muerte en el otro.');
+  tl.label('vida').caption(3.6, T.vida[0], T.vida[1]);
   tl.to(1.6, { E: 1, reb: 0, hel: 1, hojas: 0, c4: 1 });
   tl.to(2.0, { vida: 1 });
-  tl.label('todo').caption(3.6, 'Todo a la vez', 'Y nada en las ecuaciones dice que solo exista el ahora. El tramo entero está ahí, de una vez: cada instante de tu vida, para siempre.');
+  tl.label('todo').caption(3.6, T.todo[0], T.todo[1]);
   tl.to(1.2, { todo: 1 });
   tl.to(2.4, { c5: 1 });
+  if (viaje) {
+    // The bridge: back to the Earth, now, a blue light alone in the black (act VI starts there).
+    tl.label('puente').caption(3.0, '', '¿Y si el bloque, el tiempo, el espacio, tú… no fueran reales?');
+    tl.to(3.0, { c6: 1, apaga: 1 });
+  }
 
   // ---------------------------------------------------------------- the spring, the Sun, the worldlines
   const hel = (t: number, E: number, out = V()) => out.set(Math.cos(t * Math.PI * 2), t * PITCH * E, -Math.sin(t * Math.PI * 2));
@@ -219,7 +248,7 @@ export function montarElegida(stage: Stage): Instancia {
     cuenta: cuentaDe,
     rotulo(p): Rotulo | null {
       const c = tl.captionAt(p);
-      return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+      return c ? { capitulo: viaje ? 'V · ¿El tiempo se va?' : CAP, name: c.name, fact: c.fact } : null;
     },
     update(f: Frame) {
       const p = f.p;
@@ -238,9 +267,12 @@ export function montarElegida(stage: Stage): Instancia {
       }
       helice.u.uVida.value = tl.get('vida', p);
       estrellas.u.uE.value = E;
-      estrellas.u.uOn.value = ease(0.5, 1, tl.get('c5', p)) * 1.6;
+      const apaga = tl.get('apaga', p);
+      estrellas.u.uOn.value = ease(0.5, 1, tl.get('c5', p)) * 1.6 * (1 - ease(0, 0.7, apaga));
+      helice.u.uHel.value = hl * (1 - ease(0.2, 0.9, apaga));
+      solCol.u.uHel.value = hl * (1 - ease(0.2, 0.9, apaga));
       tierra.points.position.copy(hel(ahora, E));
-      tierra.u.uGain.value = (1 - todo) * lerp(1, 0.25, ease(0.3, 1, 1 - hl));
+      tierra.u.uGain.value = Math.max((1 - todo) * lerp(1, 0.25, ease(0.3, 1, 1 - hl)), ease(0.3, 1, apaga) * 1.4);
       cuadros.u.uCuadro.value = ahora * POR_ANO + K0;
       cuadros.u.uLado.value = tl.get('lado', p);
       cuadros.u.uE.value = E;
@@ -259,8 +291,10 @@ export function montarElegida(stage: Stage): Instancia {
       const a = 0.5 + f.time * 0.01;
       const yN = ahora * PITCH * E;
       const yV = ((NACE + MUERE) / 2) * PITCH * E;
+      const tierraAhora = hel(ahora, E);
       const poses: [THREE.Vector3, THREE.Vector3, THREE.Vector3, string | null][] = [
-        [V(Math.sin(a) * 3.4, yN + 1.6, Math.cos(a) * 3.4), V(0, yN, 0), V(0, 1, 0), null],
+        [V(Math.sin(a) * 16, yN + 4, Math.cos(a) * 16), V(0, yN, 0), V(0, 1, 0), null],
+        [V(Math.sin(a) * 3.4, yN + 1.6, Math.cos(a) * 3.4), V(0, yN, 0), V(0, 1, 0), 'c0'],
         [V(Math.sin(a + 0.9) * 14, yN + 2, Math.cos(a + 0.9) * 14), V(0, yN, 0), V(0, 1, 0), 'c1'],
         // Below the now, looking up the time axis: the frames ahead are the future.
         [V(0.12, yN - 2.9, 0.08), V(0, yN + 1, 0), V(0, 0, -1), 'c2'],
@@ -268,6 +302,7 @@ export function montarElegida(stage: Stage): Instancia {
         [V(Math.sin(0.3) * 21, yMid + 1.5, Math.cos(0.3) * 21), V(0, yMid, 0), V(-1, 0.32, 0.2).normalize(), 'c3'],
         [V(Math.sin(a + 0.9) * 26, yV + 3, Math.cos(a + 0.9) * 26), V(0, yV, 0), V(0, 1, 0), 'c4'],
         [V(Math.sin(a + 0.9) * 58, yV + 8, Math.cos(a + 0.9) * 58), V(0, yV, 0), V(0, 1, 0), 'c5'],
+        [tierraAhora.clone().add(V(Math.sin(a + 0.9) * 2.2, 0.4, Math.cos(a + 0.9) * 2.2)), tierraAhora.clone(), V(0, 1, 0), 'c6'],
       ];
       const pos = poses[0][0].clone();
       const look = poses[0][1].clone();

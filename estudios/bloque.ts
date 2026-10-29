@@ -35,8 +35,8 @@ export const bloque: Escena = {
     { key: '2', nombre: 'Rebanadas', nota: 'Cada instante es un cuadro; la cámara los atraviesa como un libro animado, y de lado son un bloque.' },
     { key: '3', nombre: 'Elegida', nota: 'La que eligió Diego: la hélice; de cerca, sus instantes son cuadros que atraviesas; de lado, el bloque; al salir, tu vida y las líneas de las estrellas.' },
   ],
-  montar(stage, estilo): Instancia {
-    if (estilo === 2) return montarElegida(stage);
+  montar(stage, estilo, viaje = false): Instancia {
+    if (estilo === 2) return montarElegida(stage, viaje);
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.5;

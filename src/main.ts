@@ -41,10 +41,10 @@ const ACTOS: [Escena, number][] = [
   [fractal, 0],
   [final, 3],
 ];
-/** Beats before the first act: the title. */
-const PORTADA = 1.6;
-/** Beats of black between two acts (half on each side). */
-const FUNDIDO = 0.5;
+/** Beats before the first act (the title is inside act I now). */
+const PORTADA = 0;
+/** Beats of black between two acts: none, the acts hand over through a shared image (GUION.md). */
+const FUNDIDO = 0;
 const PX_PER_BEAT = 520;
 
 const params = new URLSearchParams(location.search);
@@ -76,7 +76,7 @@ function montar(t: Tramo) {
   if (t.inst) return t.inst;
   const s = Object.create(stage, { root: { value: t.grupo } }) as Stage;
   stage.reset();
-  t.inst = t.escena.montar(s, t.estilo);
+  t.inst = t.escena.montar(s, t.estilo, true);
   t.film = { strength: stage.bloom.strength, radius: stage.bloom.radius, threshold: stage.bloom.threshold, exposure: stage.renderer.toneMappingExposure };
   t.grupo.visible = false;
   return t.inst;
@@ -170,8 +170,8 @@ function step(now: number, dt: number, at: number) {
   g.clearRect(0, 0, W, H);
   const u = f.u;
   // The dip between acts, and the title before the first.
-  const negro = Math.max(1 - clamp((at - (t.inicio - FUNDIDO / 2)) / (FUNDIDO / 2), 0, 1), clamp((at - (t.inicio + t.largo)) / (FUNDIDO / 2), 0, 1));
-  const portada = 1 - clamp((at - PORTADA * 0.35) / (PORTADA * 0.6), 0, 1);
+  const negro = FUNDIDO > 0 ? Math.max(1 - clamp((at - (t.inicio - FUNDIDO / 2)) / (FUNDIDO / 2), 0, 1), clamp((at - (t.inicio + t.largo)) / (FUNDIDO / 2), 0, 1)) : 0;
+  const portada = PORTADA > 0 ? 1 - clamp((at - PORTADA * 0.35) / (PORTADA * 0.6), 0, 1) : 0;
   const tapa = Math.max(negro, t === tramos[0] ? portada : 0);
   if (tapa > 0.001) {
     g.fillStyle = `rgba(0,0,0,${tapa})`;

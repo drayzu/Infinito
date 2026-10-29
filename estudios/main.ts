@@ -89,7 +89,7 @@ function montar(e: Escena, s: number, at: number) {
   stage.camera.far = 1e6;
   escena = e;
   estilo = clamp(s, 0, e.estilos.length - 1);
-  inst = e.montar(stage, estilo);
+  inst = e.montar(stage, estilo, params.has('viaje'));
   spacer.style.height = `${inst.tl.length * PX_PER_BEAT + innerHeight}px`;
   p = target = clamp(at, 0, inst.tl.length);
   scrollTo(0, p * PX_PER_BEAT);

@@ -48,5 +48,6 @@ export interface Escena {
   id: string;
   nombre: string;
   estilos: Estilo[];
-  montar(stage: Stage, estilo: number): Instancia;
+  /** `viaje`: the act as GUION.md has it, inside the journey (its moments, its voice, its bridges). */
+  montar(stage: Stage, estilo: number, viaje?: boolean): Instancia;
 }

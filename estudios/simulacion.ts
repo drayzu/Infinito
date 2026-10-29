@@ -138,7 +138,7 @@ export const simulacion: Escena = {
     { key: '3', nombre: 'Muñecas', nota: 'Simulaciones dentro de simulaciones: el mundo de bits es una celda de una máquina, que también es bits.' },
     { key: '4', nombre: 'Elegida', nota: 'La que eligió Diego: muñecas (3), y la red de mundos nace copiándose: de un mundo de bits salen dos, cuatro… (de Tus Tierras).' },
   ],
-  montar(stage, estilo): Instancia {
+  montar(stage, estilo, viaje = false): Instancia {
     const root = stage.root;
     const { camera } = stage;
     stage.bloom.strength = 0.45;
@@ -168,8 +168,23 @@ export const simulacion: Escena = {
       tl.to(2.1, { az: 1.9 });
       tl.label('igual').caption(2.8, 'Igual que este', 'Un mundo calculado así se vería exactamente como este.');
       tl.to(2.8, { baja: 1, az: 2.25 });
+    } else if (estilo === 3 && viaje) {
+      // GUION.md 30–33. It starts on the blue light act V leaves (the Earth, far) and comes in.
+      tl.set({ gen: 0, acerca: 0 });
+      tl.label('reglas').caption(4.2, 'Reglas', 'Todo lo que existe sigue reglas exactas. Y lo que sigue reglas se puede calcular.');
+      tl.to(1.6, { acerca: 1, az: 0.15 });
+      tl.to(1.3, { celda: 0.1, az: 0.3 });
+      tl.to(1.3, { bits: 1, celda: 0.1, az: 0.5 });
+      tl.label('copiar').caption(4.6, 'Copiar un mundo', 'Un mundo calculado es información, y la información se copia: de uno salen dos, de dos salen cuatro.');
+      tl.to(1.6, { gen: 1, lejos: 0.1 });
+      tl.to(1.2, { gen: 3, lejos: 0.4 });
+      tl.to(1.8, { gen: 9, lejos: 0.95 });
+      tl.label('maquina').caption(4.8, 'La máquina', 'Una sola estrella bastaría para calcular miles de millones de vidas como la tuya. Las mentes calculadas serían muchas más que las otras. ¿Y una mente calculada mira menos que tú?');
+      tl.to(4.8, { lejos: 1.5, cuenta: 1 });
+      tl.label('munecas').caption(4.2, 'Muñecas', 'Y la máquina también podría estar calculada, dentro de otra. No hay forma de saber en qué piso estás.');
+      tl.to(4.2, { lejos: 3.6, cuenta: 3 });
     } else if (estilo === 3) {
-      tl.set({ gen: 0 });
+      tl.set({ gen: 0, acerca: 1 });
       tl.label('reglas').caption(2.4, 'Un mundo calculado', 'Imagina que este mundo es un cálculo: cada trozo de él, un bit que se enciende y se apaga.');
       tl.to(1.2, { celda: 0.1, az: 0.3 });
       tl.to(1.2, { bits: 1, celda: 0.1, az: 0.5 });
@@ -384,7 +399,7 @@ export const simulacion: Escena = {
         const gc = tl.get('gen', p);
         if (c < 0.01) {
           const n = Math.pow(2, Math.ceil(gc - 0.02));
-          return { pisos: [String(n)], linea: n === 1 ? 'un mundo' : 'mundos copiados · cada uno con un tú', h: slog(n) };
+          return { pisos: [String(n)], linea: n === 1 ? (viaje ? 'tu mundo' : 'un mundo') : 'mundos copiados · cada uno con un tú', h: slog(n) };
         }
         if (p < tl.at('munecas')) {
           const l = lerp(Math.log10(512), 11, ease(0, 1, c));
@@ -402,7 +417,7 @@ export const simulacion: Escena = {
       cuenta: cuentaDe,
       rotulo(p): Rotulo | null {
         const c = tl.captionAt(p);
-        return c ? { capitulo: CAP, name: c.name, fact: c.fact } : null;
+        return c ? { capitulo: viaje ? 'VI · ¿Y si nada es real?' : CAP, name: c.name, fact: c.fact } : null;
       },
       update(f: Frame) {
         const p = f.p;
@@ -493,7 +508,7 @@ export const simulacion: Escena = {
             const th = Math.tan(THREE.MathUtils.degToRad(20));
             const fit = Math.max(ex / (th * camera.aspect), ey / th) * 1.5 + ez;
             const dMax = NIVELES[NIVELES.length - 1].E * 1.6;
-            const d = Math.max(3.0, fit, logLerp(3.0, dMax, ease(0, 1, lejos / 3.6)));
+            const d = Math.max(3.0, fit, logLerp(3.0, dMax, ease(0, 1, lejos / 3.6)), logLerp(70, 3.0, ease(0, 1, tl.get('acerca', p))));
             for (const nv of NIVELES) if (nv.nube) {
               nv.nube.u.uOn.value = ease(nv.S * 0.5, nv.S * 2.2, d);
               enfocar(nv.nube, f.focal, f.dpr, f.time);
