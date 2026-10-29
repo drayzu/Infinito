@@ -204,8 +204,8 @@ export const leyes: Escena = {
             move: /* glsl */ `
               float c = uColapso;
               p *= max(1.0 - c, 0.0) * (1.0 - c) + 0.002;
-              em *= (1.0 + 2.5 * c * c * step(c, 0.97)) * (1.0 - 0.7 * c);
-              em *= 1.0 - smoothstep(0.97, 1.0, c);
+              em *= (1.0 + 2.5 * c * c) * (1.0 - 0.7 * c);
+              em *= 1.0 - smoothstep(0.8, 1.0, c);
               fuente = 0.8;`,
             uniforms: { uColapso: { value: 0 } },
           });

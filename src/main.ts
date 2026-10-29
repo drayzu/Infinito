@@ -116,10 +116,28 @@ async function precompilar() {
       o.visible = true;
     }
   });
+  // Into a target like the film's (half float): the programs three builds for an off-screen target
+  // differ from those for the canvas (no tone mapping, linear output), and the film draws off screen.
+  // One draw of everything afterwards also uploads every point cloud to the GPU now, not mid-journey.
+  const rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
+  const antes = stage.renderer.getRenderTarget();
+  stage.renderer.setRenderTarget(rt);
   await stage.renderer.compileAsync(stage.scene, stage.camera);
+  stage.renderer.render(stage.scene, stage.camera);
+  stage.renderer.setRenderTarget(antes);
+  rt.dispose();
   for (const o of ocultos) o.visible = false;
 }
-void precompilar();
+const calentado = precompilar();
+// Then every part of every act draws once, unseen: a few beats each frame, each frame ending with the
+// real one, so only the real one reaches the screen. The first draw of some things (a body close up,
+// a patch of finer points) stalls a frame; better while the opening's point is on than mid-journey.
+const porCalentar: number[] = [];
+let calentarListo: () => void = () => {};
+const calentadoTodo = new Promise<void>((r) => (calentarListo = r));
+void calentado.then(() => {
+  for (let b = 0; b < TOTAL; b += 0.5) porCalentar.push(b);
+});
 
 /** The act on at beat P, and the beat inside it. */
 function enTramo(P: number) {
@@ -196,6 +214,14 @@ function step(now: number, dt: number, at: number) {
       x.grupo.scale.setScalar(1);
     }
   }
+  // An act that was the last one in a relay (placed inside the next act's world) and is on again,
+  // because the scroll went back across the change: back to its own place.
+  if (!t.grupo.matrixAutoUpdate) {
+    t.grupo.matrixAutoUpdate = true;
+    t.grupo.matrix.identity();
+    t.grupo.position.set(0, 0, 0);
+    t.grupo.scale.setScalar(1);
+  }
   t.grupo.visible = true;
   const time = calm.matches ? 0 : now / 1000;
   const f: Frame = { time, dt, p, W, H, u: H / 860, dpr: stage.dpr, focal: H / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), camera };
@@ -251,6 +277,7 @@ function step(now: number, dt: number, at: number) {
     stage.bloom.strength = fa.strength + (fb.strength - fa.strength) * k;
     stage.bloom.radius = fa.radius + (fb.radius - fa.radius) * k;
     stage.bloom.threshold = fa.threshold + (fb.threshold - fa.threshold) * k;
+    stage.renderer.toneMappingExposure = fa.exposure + (fb.exposure - fa.exposure) * k;
   } else {
     fundir(t.grupo, 1);
     if (t.film) {
@@ -341,6 +368,10 @@ function frame(now: number) {
     if (next >= TOTAL) autoplay = false;
   }
   P = frozen ?? damp(P, target, 4.2, dt);
+  if (porCalentar.length) {
+    for (let k = 0; k < 3 && porCalentar.length; k++) step(now, dt, porCalentar.shift()!);
+    if (!porCalentar.length) calentarListo();
+  }
   step(now, dt, P);
   requestAnimationFrame(frame);
 }
@@ -364,12 +395,31 @@ function shot(b: number, warm = 40) {
   return out;
 }
 const api = {
+  /** Debug: one frame at beat b: the act, the camera, the frame's time (with the read back) and the film's mean brightness (0..765). */
+  sonda(b: number, now = 0) {
+    const t0 = performance.now();
+    step(now, 1 / 60, b);
+    const s = document.createElement('canvas');
+    s.width = 32;
+    s.height = 18;
+    const x = s.getContext('2d')!;
+    x.drawImage(canvas, 0, 0, 32, 18);
+    const d = x.getImageData(0, 0, 32, 18).data;
+    let l = 0;
+    for (let i = 0; i < d.length; i += 4) l += d[i] + d[i + 1] + d[i + 2];
+    const ms = performance.now() - t0;
+    const { t, p } = enTramo(b);
+    const c = stage.camera;
+    return { acto: t.escena.id, p: +p.toFixed(2), pos: c.position.toArray(), q: c.quaternion.toArray(), fov: c.fov, ms, lum: l / (32 * 18) };
+  },
   get total() {
     return TOTAL;
   },
   tramos: () => tramos.map((t) => [t.escena.id, t.estilo + 1, +t.inicio.toFixed(2), +t.largo.toFixed(2)]),
   async listo() {
     await Promise.all(tramos.map((t) => t.inst?.listo));
+    await calentado;
+    await calentadoTodo;
     await document.fonts.ready;
   },
   async hoja(path: string, beats: number[], cols = 5, tw = 384) {

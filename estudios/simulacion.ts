@@ -285,7 +285,7 @@ export const simulacion: Escena = {
           dup64.push(c);
         }
         const bd = materiaBuilder(31);
-        for (let g = 7; g <= GD; g++) for (const n of genes[g]) bd.push(n.pos.x, n.pos.y, n.pos.z, new THREE.Color(0.7, 0.6, 1.0), 1.5, 0.6, { from: [n.padre.x, n.padre.y, n.padre.z], kind: g });
+        for (let g = 7; g <= GD; g++) for (const n of genes[g]) bd.push(n.pos.x, n.pos.y, n.pos.z, new THREE.Color(0.7, 0.6, 1.0), 1.5, 0.2, { from: [n.padre.x, n.padre.y, n.padre.z], kind: g });
         dupPuntos = materia(bd.data(), {
           pre: /* glsl */ `uniform float uG;`,
           move: /* glsl */ `

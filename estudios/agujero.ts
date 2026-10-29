@@ -67,8 +67,8 @@ export const agujero: Escena = {
         tl.to(3.4, { d: 0.55, cuenta: 1 });
         tl.label('horizonte').caption(3.0, 'Adentro', 'Al cruzar el borde, todos los caminos llevan al centro.');
         tl.to(1.2, { d: 1 });
-        tl.to(0.25, { dentro: 1 });
-        tl.to(1.55, { cae: 1 });
+        tl.to(0.6, { dentro: 1 });
+        tl.to(1.2, { cae: 1 });
         tl.label('rebote').caption(3.4, 'Otro comienzo', 'Quizá en el centro no hay un final, sino un rebote. Y de ese rebote, un universo nuevo.');
         tl.to(0.7, { rebote: 1, cae: 1.3 });
         tl.to(2.7, { nace: 1 });
@@ -82,8 +82,8 @@ export const agujero: Escena = {
       if (!viaje) tl.label('horizonte').caption(3.0, 'El horizonte', 'Al cruzar el borde, todos los caminos llevan hacia adentro. Lo que cae contigo se estira hacia el centro.');
       if (!viaje) {
       tl.to(1.2, { d: 1 });
-      tl.to(0.25, { dentro: 1 });
-      tl.to(1.55, { cae: 1 });
+      tl.to(0.6, { dentro: 1 });
+      tl.to(1.2, { cae: 1 });
       tl.label('rebote').caption(3.0, 'Otro comienzo', 'Algunas teorías dicen que en el centro no hay un punto sin fin: la materia rebota y empieza a inflarse. Un universo nuevo.');
       tl.to(0.7, { rebote: 1, cae: 1.3 });
       tl.to(2.3, { nace: 1 });
@@ -106,9 +106,10 @@ export const agujero: Escena = {
             // Each streak runs towards the camera and past it, faster and longer as the fall goes on.
             float L = 14.0;
             float z = fract(position.z - uTime * (0.25 + 1.2 * uCae)) * L;
-            float stretch = 0.03 + 0.5 * uCae;
+            float stretch = 0.12 + 0.45 * uCae;
             p = vec3(p.xy * (1.0 - 0.6 * uCae * (1.0 - z / L)), -z + aDelay * stretch);
-            em *= uOn * (0.5 + 0.8 * uCae) * smoothstep(L, L * 0.6, z) * smoothstep(0.0, 1.0, z);
+            em *= uOn * (1.1 + 0.6 * uCae) * smoothstep(L, L * 0.6, z) * smoothstep(0.0, 1.0, z);
+            sz *= 1.8 - 0.8 * uCae;
             em = mix(em, vec3(1.0, 0.95, 0.9) * length(em), uCae * 0.6);
             fuente = 0.8;`,
           uniforms: { uCae: { value: 0 }, uOn: { value: 0 } },
@@ -238,19 +239,22 @@ export const agujero: Escena = {
           if (dentro < 1) {
             mirar(camera, pos, V(0, 0.9 * ease(0.4, 0.9, d) * (1 - ease(0.9, 1, d)), 0));
           } else {
-            // Inside: the camera's own frame (the streaks and the new universe are drawn round it).
+            // Inside: the camera's own frame (the streaks are drawn round it).
             mirar(camera, V(0, 0, 0.001), V(0, 0, -1));
           }
+          // The camera's way from the fall into the new universe (used below once the bounce starts).
+          const pasa = ease(0.15, 0.85, rebote);
           camera.updateMatrixWorld();
           bh.update({ camera, center: V(0, 0, 0), normal: V(0, 1, 0.08).normalize(), rs: 1, sky: new THREE.Matrix3(), time: f.time, alpha: 1 - dentro });
           caida.u.uCae.value = Math.min(cae, 1);
           caida.u.uOn.value = dentro * (1 - ease(1.05, 1.3, cae));
-          destello.u.uOn.value = ease(0, 0.35, rebote) * (1 - ease(0.35, 1, rebote) * 0.85) * (1 - ease(0, 0.6, nace));
+          destello.u.uOn.value = ease(0, 0.6, rebote) * (1 - ease(0.05, 0.8, nace));
           nuevo.u.uK.value = ease(0, 1, nace);
           nuevo.u.uNace.value = nace;
-          nuevo.points.visible = rebote > 0.3;
-          stage.renderer.toneMappingExposure = 1.1 + 1.6 * ease(0.1, 0.4, rebote) * (1 - ease(0.4, 1, rebote));
-          if (rebote > 0.3) {
+          nuevo.points.visible = rebote > 0.001;
+          const nuevoOn = ease(0.25, 1, rebote);
+          stage.renderer.toneMappingExposure = 1.1 + 0.6 * ease(0, 0.6, rebote) * (1 - ease(0, 0.7, nace));
+          if (rebote > 0.001) {
             // In the new universe: from its middle, out until it is whole in front of us.
             const r = lerp(0.05, 2.7, ease(0, 1, sale));
             const a = 0.3 + f.time * 0.01 + sale * 0.6;
@@ -262,8 +266,8 @@ export const agujero: Escena = {
               pos.lerp(estrellaPos.clone().addScaledVector(pos.clone().sub(estrellaPos).normalize(), 0.06), pu);
               look.lerp(estrellaPos, ease(0, 0.4, pu));
             }
-            nuevo.u.uGain.value = 1 - 0.85 * ease(0.4, 1, pu);
-            mirar(camera, pos, look);
+            nuevo.u.uGain.value = nuevoOn * (1 - 0.85 * ease(0.4, 1, pu));
+            mirar(camera, V(0, 0, 0.001).lerp(pos, pasa), V(0, 0, -1).lerp(look, pasa));
           }
           if (estrella) {
             estrella.u.uGain.value = ease(0, 0.6, tl.get('puente', p));

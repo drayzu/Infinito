@@ -123,7 +123,7 @@ export const boltzmann: Escena = {
           pre: /* glsl */ `uniform float uArma, uPiensa;`,
           move: /* glsl */ `
             // Drifting while scattered; still once it is a brain.
-            float k2 = clamp(uArma * 1.6 - aDelay * 0.6, 0.0, 1.0);
+            float k2 = clamp(uArma * 2.2 - aDelay * 1.2, 0.0, 1.0);
             k2 = k2 * k2 * (3.0 - 2.0 * k2);
             vec3 deriva = vec3(sin(uTime * 0.07 + seed * 40.0), cos(uTime * 0.05 + seed * 23.0), sin(uTime * 0.06 + seed * 17.0)) * 0.6;
             p = mix(aFrom + deriva, position, k2);

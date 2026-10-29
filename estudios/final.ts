@@ -275,8 +275,9 @@ export const final: Escena = {
           const ch = tl.get('chispa', p);
           const vuelve = ease(0, 1, tl.get('vuelve', p));
           if (ch > 0) {
-            pos = V(0, 0.05, 1.5).lerp(pos, vuelve);
-            look = V(0, 0, -2).multiplyScalar(ease(0, 1, Math.min(ch, 1)) * (1 - vuelve));
+            const ir = ease(0, 0.5, ch) * (1 - vuelve);
+            pos = pos.clone().lerp(V(0, 0.05, 1.5), ir);
+            look = look.clone().lerp(V(0, 0, -2), ir);
           }
           const k = ease(0, 1, tl.get('acerca', p));
           pos = pos.lerp(ELEGIDO.clone().add(V(0.15, 0.05, 0.9)), k);
