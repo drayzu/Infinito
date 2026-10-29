@@ -41,7 +41,7 @@ const bez = (r: Rama, s: number, out = V()) => {
 };
 
 /** A branching tree: every branch splits in two, turning ±`ang` about a random axis; lengths shrink by `k`. */
-function arbol(seed: number, G: number, ang: number, k: number, L0 = 1) {
+function arbol(seed: number, G: number, ang: number, k: number, L0 = 1, sube = 0) {
   const b = materiaBuilder(seed);
   const r = b.r;
   const ramas: Rama[] = [];
@@ -75,13 +75,13 @@ function arbol(seed: number, G: number, ang: number, k: number, L0 = 1) {
     const axis = V(r() - 0.5, r() - 0.5, r() - 0.5).cross(d).normalize();
     const pick = tuPick[gen + 1];
     for (const sgn of [-1, 1]) {
-      const nd = d.clone().applyAxisAngle(axis, sgn * ang * (0.8 + 0.4 * r())).normalize();
+      const nd = d.clone().applyAxisAngle(axis, sgn * ang * (0.8 + 0.4 * r())).addScaledVector(d0, sube).normalize();
       const child = sgn === -1 ? 0 : 1;
       grow(end.clone(), d, nd, t0 + L, gen + 1, tu && child === pick, hue + (r() - 0.5) * 0.07);
     }
   };
   const d0 = V(0, 0, -1);
-  grow(V(0, 0, 0), d0, d0, 0, 0, true, 0.73);
+  grow(V(0, 0, 0), d0.clone(), d0.clone(), 0, 0, true, 0.73);
   const data = b.data();
   const tu = new Float32Array(data.aKind.length);
   for (const [a, z] of tuIdx) tu.fill(1, a, z);
@@ -90,7 +90,9 @@ function arbol(seed: number, G: number, ang: number, k: number, L0 = 1) {
   const fin = Math.max(...ramas.map((x) => x.t1));
   const centro = ramas.reduce((c, x) => c.add(x.b), V()).multiplyScalar(1 / ramas.length);
   const radio = Math.max(...ramas.map((x) => x.b.distanceTo(centro)));
-  return { data, tu, ramas, splits, camino, fin, centro, radio };
+  const zmin = Math.min(...ramas.map((x) => x.b.z));
+  const ancho = 2 * Math.max(...ramas.map((x) => Math.hypot(x.b.x - centro.x, x.b.y - centro.y)));
+  return { data, tu, ramas, splits, camino, fin, centro, radio, zmin, ancho };
 }
 
 const ARBOL_PRE = /* glsl */ `
@@ -216,7 +218,7 @@ export const ramas: Escena = {
     let listo: Promise<unknown> = Promise.resolve();
 
     if (estilo !== 2) {
-      tree = curvo ? arbol(31, 12, 0.62, 0.79, ride ? 0.8 : 0.5) : arbol(1957, 12, 0.34, 0.8);
+      tree = curvo ? arbol(31, 12, 0.62, 0.79, ride ? 0.8 : 0.5, estilo === 3 ? 0.22 : 0) : arbol(1957, 12, 0.34, 0.8);
       nube = materia(tree.data, {
         pre: ARBOL_PRE,
         move: ARBOL_MOVE,
@@ -342,7 +344,7 @@ export const ramas: Escena = {
         camera.fov = ride ? lerp(58, 44, ease(0, 1, out)) : 44;
         if (estilo !== 2 && nube && tree) {
           nube.u.uT.value = t;
-          nube.u.uViejo.value = lerp(0.42, 0.75, out);
+          nube.u.uViejo.value = lerp(0.42, ride ? 0.55 : 0.75, out);
           if (ride) {
             // Riding the tip, a little behind and above; the offsets shrink with the branch.
             const L = tip(t, tmpP, tmpD);
@@ -355,14 +357,20 @@ export const ramas: Escena = {
             const o = ease(0, 1, out);
             const centro = estilo === 0 ? V(0, 0, -2.2) : tree.centro.clone();
             const a = 0.6 + f.time * 0.02;
-            const lejos = estilo === 0 ? V(Math.sin(a) * 5.2, 2.4, -4.5) : V(Math.sin(a), 0.42, Math.cos(a)).normalize().multiplyScalar(tree.radio * 1.55);
-            const fuera = tmpP.clone().add(V(Math.sin(a) * 1.4, 0.7, -1.8)).lerp(centro.clone().add(lejos), ease(0.4, 1, out));
+            const lado = V(Math.cos(0.4 + a * 0.5), Math.sin(0.4 + a * 0.5), 0);
+            const th = Math.tan(THREE.MathUtils.degToRad(22));
+            const alto = -tree.zmin;
+            const objetivo = V(tree.centro.x, tree.centro.y, tree.zmin * 0.53);
+            const dist = Math.max(alto / (2 * th), tree.ancho / (2 * th * camera.aspect)) * 1.32;
+            const fuera = tmpP.clone().add(V(Math.sin(a) * 1.4, 0.7, -1.8)).lerp(objetivo.clone().addScaledVector(lado, dist), ease(0.4, 1, out));
             const pos = ride.lerp(fuera, o);
             const lj = ease(0, 1, tl.get('lejos', f.p));
             // Far off, the tree is a ball of light: dimmer, so it does not burn white.
-            nube.u.uGain.value = 1 - 0.55 * lj;
-            if (lj > 0) pos.lerp(centro.clone().add(lejos.clone().multiplyScalar(5.5)), lj);
-            mirar(camera, pos, look.lerp(centro, ease(0, 0.8, out)), up.lerp(V(0, 1, 0), o).normalize());
+            nube.u.uGain.value = lerp(1, 0.62, o) * (1 - 0.4 * lj);
+            if (lj > 0) pos.lerp(centro.clone().addScaledVector(lado, tree.radio * 1.08 * 7.7), lj);
+            const mira = look.lerp(objetivo, ease(0, 0.8, out)).lerp(centro, lj);
+            mirar(camera, pos, mira, up.lerp(V(0, 0, -1), o).normalize());
+            void centro;
             if (yo) {
               yo.points.position.copy(tmpP);
               yo.u.uGain.value = (1 + 0.22 * Math.sin(f.time * 1.5)) * (1 - ease(tl.at('uno') + 1.5, tl.at('elige') + 0.5, f.p));
