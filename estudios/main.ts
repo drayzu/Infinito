@@ -9,6 +9,7 @@ import { FONDOS } from '../src/engine/pantalla';
 import { createStage, liberar } from './stage';
 import { cuenta, escalera, marca } from './placa';
 import type { Escena, Frame, Instancia } from './tipos';
+import { tuDoble } from './tudoble';
 import { ramas } from './ramas';
 import { simulacion } from './simulacion';
 import { bloque } from './bloque';
@@ -22,13 +23,13 @@ import { final } from './final';
  * Infinito's phase-0 studies: the key images of the plan (v2, 28 Oct 2026), each in two or three
  * ways so Diego can choose. The page scroll is time; nothing else moves the camera.
  *
- * URL: ?m=ramas|leyes|agujero|bloque|simulacion|real|fractal|final &s=1..4 (the way) &p=beat (start there) &ver=beat (freeze)
+ * URL: ?m=doble|ramas|leyes|agujero|bloque|simulacion|real|fractal|final &s=1..4 (the way) &p=beat (start there) &ver=beat (freeze)
  * &cap=1600x900 (render at that size, for captures) &clean. `?debug` leaves `estudio` in the
  * console: `estudio.hoja('docs/estudios/x.jpg', [beats], cols, width)` saves a contact sheet.
  */
 
-// In the order of the acts: II, III, IV, V, VI (I is estudios/doble.html).
-const ESCENAS: Escena[] = [ramas, leyes, agujero, bloque, simulacion, boltzmann, fractal, final];
+// In the order of the acts (the first study of the double, with three ways, is estudios/doble.html).
+const ESCENAS: Escena[] = [tuDoble, ramas, leyes, agujero, bloque, simulacion, boltzmann, fractal, final];
 const PX_PER_BEAT = 520;
 
 const params = new URLSearchParams(location.search);
