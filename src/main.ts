@@ -104,6 +104,23 @@ for (const [escena, estilo] of ACTOS) {
 const TOTAL = cursor;
 spacer.style.height = `${TOTAL * PX_PER_BEAT + innerHeight}px`;
 
+// Every act's shaders compile once, at the start: otherwise the first frame of each act compiles
+// them and the page stalls right at the change of act. Hidden things are shown for it (three only
+// compiles what is visible), then put back.
+async function precompilar() {
+  await Promise.all(tramos.map((t) => t.inst?.listo));
+  const ocultos: THREE.Object3D[] = [];
+  stage.scene.traverse((o) => {
+    if (!o.visible) {
+      ocultos.push(o);
+      o.visible = true;
+    }
+  });
+  await stage.renderer.compileAsync(stage.scene, stage.camera);
+  for (const o of ocultos) o.visible = false;
+}
+void precompilar();
+
 /** The act on at beat P, and the beat inside it. */
 function enTramo(P: number) {
   let t = tramos[0];

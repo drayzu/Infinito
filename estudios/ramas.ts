@@ -216,6 +216,9 @@ export const ramas: Escena = {
       tl.to(1.8, { t: estilo === 2 ? 12 : estilo === 1 ? 4.5 : 4.95, out: 1, mundos: 1 });
     }
 
+    /** The tree's shrink per generation and its first length. */
+    const K = curvo ? 0.79 : 0.8;
+    const L0 = curvo ? (ride ? 0.8 : 0.5) : 1;
     let burbuja: Nube | null = null;
     let yo: Nube | null = null;
     if (viaje) {
@@ -236,7 +239,7 @@ export const ramas: Escena = {
     let listo: Promise<unknown> = Promise.resolve();
 
     if (estilo !== 2) {
-      tree = curvo ? arbol(31, 12, 0.62, 0.79, ride ? 0.8 : 0.5, estilo === 3 ? 0.22 : 0) : arbol(1957, 12, 0.34, 0.8);
+      tree = curvo ? arbol(31, 12, 0.62, K, L0, estilo === 3 ? 0.22 : 0) : arbol(1957, 12, 0.34, K, L0);
       nube = materia(tree.data, {
         pre: ARBOL_PRE,
         move: ARBOL_MOVE,
@@ -320,7 +323,11 @@ export const ramas: Escena = {
       const q = bez(r, Math.min(1, s + 0.02), V());
       const q0 = bez(r, Math.max(0, s - 0.02), V());
       dir.copy(q).sub(q0).normalize();
-      return r.t1 - r.t0;
+      // The length the camera keeps its distance by: the generation's nominal length, flowing from one
+      // generation to the next along the branch (a branch's own length jumps at every split, and the
+      // camera jumped with it).
+      const nominal = (g: number) => (g === 0 ? L0 : Math.pow(K, g));
+      return nominal(r.gen) * Math.pow(nominal(r.gen + 1) / nominal(r.gen), s);
     };
 
     /** Branches alive at tree time t. */
