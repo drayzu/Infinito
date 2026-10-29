@@ -36,10 +36,11 @@
 <summary><sub>How it's made</sub></summary>
 <br>
 
-- The fourth piece of Horizontes (Espacio · Tiempo · Destino · Infinito): one scroll, about eight minutes, that asks what lies beyond and counts how many — as powers of ten, then as towers of powers (10^10^29), then the infinities — while it questions, one by one, everything you take for granted: that you are the only one, that your life is one, that time passes, that any of this is real.
-- One voice, in the second person, and one protagonist: a point of teal light, you. Each act ends on the image the next one begins from, so the journey never cuts.
-- Everything is points: the Earth comes from a shared library of bodies drawn in points over real maps (Solar System Scope, CC BY 4.0); the black hole is ray traced; the trees of branches, the bubble universes, the worlds of bits and the Mandelbrot set are points too.
-- Most of what it shows is hypothesis, not observation — the double (Tegmark), the many worlds (Everett), eternal inflation and the string landscape, universes born in black holes (Smolin, Popławski), the block universe, the simulation argument (Bostrom), Boltzmann brains — and the piece says so.
-- TypeScript, Three.js and Vite, no framework. `npm install`, `npm run dev`. The studies behind each act are in `estudios/`. The clips above are recorded from the piece itself: `node tools/clip.mjs`, then `python tools/readme_media.py`.
+- The fourth piece of Horizontes (Espacio · Tiempo · Destino · Infinito): one scroll, about eight minutes, that asks how many of you there are and counts them in powers of ten, then in towers of powers (10<sup>10<sup>29</sup></sup>), then in infinities.
+- One voice in the second person and one protagonist, a point of teal light: you. Each act ends on the image the next one begins from, so the journey never cuts.
+- Everything is points: the Earth comes from the series' shared library of bodies (Solar System Scope, CC BY 4.0), and the branching lives, bubble universes, worlds of bits and the Mandelbrot set are points too. The black hole is ray traced.
+- Most of it is hypothesis, not observation, and the piece says so: Tegmark's double, Everett's many worlds, eternal inflation and the string landscape, universes born in black holes (Smolin, Popławski), the block universe, Bostrom's simulation argument, Boltzmann brains.
+- In Spanish for now. Key: `A` autoplay. The studies behind each act are in `estudios/`.
+- TypeScript, Three.js and Vite, no framework. `npm install`, `npm run dev`; pushing to `main` deploys to GitHub Pages.
 
 </details>
