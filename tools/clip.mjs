@@ -4,6 +4,7 @@
 // (eased between them, never backwards, so it can linger on a moment and rush through the next).
 // Beats are the act's own (as in GUION.md), so the list holds when other acts change length. Frames
 // land in <out>/<segment>/0000.jpg. Segments already captured are kept (--fresh <name>[,<name>…]).
+// A segment with `sub` (and `shutter`, 0.3 of a frame by default) is drawn with motion blur.
 //
 //   npm run dev   (in another terminal)
 //   node tools/clip.mjs [list = tools/readme.json] [out = tools/readme]
@@ -133,8 +134,13 @@ for (const seg of segmentos) {
     for (let k = 0; k < 12; k++) await ev(`(viaje.cuadro(${o + seg.b}, ${t0 - (12 - k) * (1000 / FPS)}), 1)`);
     let recargada = false;
     for (let i = 0; i < seg.n && !recargada; i++) {
-      const b = o + beatAt(i);
-      const r = await ev(`(() => window.__clip ? viaje.cuadro(${b}, ${t0 + i * (1000 / FPS)}) : 'reload')()`);
+      // `sub` draws the frame that many times across `shutter` of a frame and averages them: motion
+      // blur, so what crosses the screen fast glides instead of jumping (a short shutter keeps it sharp).
+      const k = seg.sub ?? 1, sh = seg.shutter ?? 0.3;
+      const us = Array.from({ length: k }, (_, s) => (k === 1 ? 0 : ((s + 0.5) / k - 0.5) * sh));
+      const B = us.map((u) => o + beatAt(i + u)), T = us.map((u) => t0 + (i + u) * (1000 / FPS));
+      const b = B[0];
+      const r = await ev(`(() => window.__clip ? ${k === 1 ? `viaje.cuadro(${b}, ${T[0]})` : `viaje.cuadroMedio(${JSON.stringify(B)}, ${JSON.stringify(T)})`} : 'reload')()`);
       const url = r.result?.result?.value;
       if (url === 'reload' || /is not defined/.test(r.result?.result?.description ?? '')) recargada = true;
       else if (typeof url !== 'string') throw new Error(`no frame at ${b}: ${JSON.stringify(r.result).slice(0, 300)}`);

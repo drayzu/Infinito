@@ -360,6 +360,7 @@ function step(now: number, dt: number, at: number) {
 let last = performance.now();
 /** Recording (tools/clip.mjs): the page stops drawing by itself; frames come only from `cuadro`. */
 let grabando = false;
+let medio: HTMLCanvasElement | undefined;
 function frame(now: number) {
   if (grabando) return;
   const dt = Math.min((now - last) / 1000, 0.1);
@@ -405,6 +406,21 @@ const api = {
   cuadro(b: number, now: number, q = 0.95) {
     step(now, 1 / 30, b);
     return canvas.toDataURL('image/jpeg', q);
+  },
+  /** The same with motion blur: the film drawn at each beat `bs[k]`, time `ts[k]`, and averaged. */
+  cuadroMedio(bs: number[], ts: number[], q = 0.95) {
+    const out = (medio ??= document.createElement('canvas'));
+    if (out.width !== canvas.width || out.height !== canvas.height) {
+      out.width = canvas.width;
+      out.height = canvas.height;
+    }
+    const o = out.getContext('2d')!;
+    bs.forEach((b, k) => {
+      step(ts[k], 1 / 30 / bs.length, b);
+      o.globalAlpha = 1 / (k + 1);
+      o.drawImage(canvas, 0, 0);
+    });
+    return out.toDataURL('image/jpeg', q);
   },
   /** Debug: one frame at beat b: the act, the camera, the frame's time (with the read back) and the film's mean brightness (0..765). */
   sonda(b: number, now = 0) {
