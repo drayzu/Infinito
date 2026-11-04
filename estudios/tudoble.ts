@@ -162,6 +162,7 @@ export const tuDoble: Escena = {
       return { pisos: ['10', '10', '29'], unidad: 'm', linea: 'hasta tu doble', h: h1010(29) };
     };
 
+    let arco: THREE.QuadraticBezierCurve3 | undefined;
     return {
       tl,
       listo,
@@ -196,6 +197,9 @@ export const tuDoble: Escena = {
         marca.u.uGain.value = ease(0.5, 0.65, aleja) * (1 - ease(0, 0.4, vuela)) * respira;
         nuestro.u.uOn.value = ease(0.45, 1, redOn) * (1 - 0.5 * ease(0.6, 1, vuela));
         horizonte.u.uOn.value = ease(0.6, 1, redOn) * (0.45 + 0.55 * ease(0, 1, sale));
+        // These clouds multiply all emission by uOn; keep any opacity even when unlit.
+        nuestro.points.visible = nuestro.u.uOn.value !== 0 || nuestro.u.uInk.value !== 0;
+        horizonte.points.visible = horizonte.u.uOn.value !== 0 || horizonte.u.uInk.value !== 0;
         otra.presencia = ease(0.4, 1, zoom) * (1 - ease(0, 0.8, apaga));
         otra.yo.u.uGain.value = ease(0, 1, llega) * respira * (1 - 0.15 * ease(0.8, 1, apaga));
 
@@ -208,14 +212,14 @@ export const tuDoble: Escena = {
         // Far out, the camera turns a little round all we see.
         pos.applyAxisAngle(V(0, 1, 0), ease(0.55, 1, aleja) * a * 0.6);
         pos.lerp(V(Math.sin(a) * 6.5, 2.4, Math.cos(a) * 6.5 + 1.5), ease(0, 1, sale));
-        const arco = new THREE.QuadraticBezierCurve3(V(Math.sin(a) * 6.5, 2.4, Math.cos(a) * 6.5 + 1.5), V(DOBLE.x * 0.5, 6, DOBLE.z * 0.3), DOBLE.clone().add(V(1.2, 0.8, 3.2)));
         const v = ease(0, 1, vuela);
         if (v > 0) {
-          pos = arco.getPoint(v);
+          arco ??= new THREE.QuadraticBezierCurve3(V(), V(DOBLE.x * 0.5, 6, DOBLE.z * 0.3), DOBLE.clone().add(V(1.2, 0.8, 3.2)));
+          arco.v0.set(Math.sin(a) * 6.5, 2.4, Math.cos(a) * 6.5 + 1.5);
+          pos = arco.getPoint(v, pos);
           look = look.lerp(DOBLE, ease(0, 0.6, v));
         }
         const z = ease(0, 1, zoom);
-        const S1 = aqui().applyEuler(GIRO).multiplyScalar(R_T).add(DOBLE);
         if (z > 0) {
           const t0 = DOBLE.clone().add(V(1.2, 0.8, 3.2));
           const dir = t0.clone().sub(DOBLE).normalize();
@@ -236,6 +240,7 @@ export const tuDoble: Escena = {
         for (const c of copias) {
           const base = c.esDoble ? lerp(0.4, 1, ease(0.3, 1, vuela)) * (1 - 0.9 * ease(0, 1, llega)) : 0.28 * (1 - ease(0, 0.6, zoom));
           c.u.uOn.value = ease(0, 0.6, sale) * base * Math.exp(-c.pos.distanceTo(camera.position) / 14);
+          c.points.visible = c.u.uOn.value !== 0 || c.u.uInk.value !== 0;
           c.u.uFocal.value = f.focal;
           c.u.uMinPx.value = 1.6 * f.dpr;
           c.u.uMaxPx.value = 24 * f.dpr;
@@ -249,7 +254,6 @@ export const tuDoble: Escena = {
           tt.yo.u.uSizeUnit.value = R_T;
         }
         for (const n of nubes) enfocar(n, f.focal, f.dpr, t);
-        void S1;
       },
       placa(g, f) {
         // The title, over the Earth, in the third moment.

@@ -192,6 +192,13 @@ const mapas = new Map<Tramo, { m: THREE.Matrix4; escala: number }>();
 
 const smooth = (x: number) => x * x * (3 - 2 * x);
 const camA = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), fov: 40 };
+// Scratch values for a relay; the cached world maps keep their own matrices.
+const relayCamera = {
+  v0: new THREE.Vector3(), v1: new THREE.Vector3(),
+  n0: new THREE.Vector3(), n1: new THREE.Vector3(), dir: new THREE.Vector3(),
+  turn: new THREE.Quaternion(), partial: new THREE.Quaternion(),
+  qB: new THREE.Quaternion(), twist: new THREE.Quaternion(), roll: new THREE.Quaternion(),
+};
 
 /** One frame at journey beat `at`, ambient time `now` (ms), step `dt` (s). */
 function step(now: number, dt: number, at: number) {
@@ -255,18 +262,18 @@ function step(now: number, dt: number, at: number) {
     // The camera: from where the last act left it to where this act wants it, turning round our
     // entrada and moving through distance in log (worlds of very different sizes meet here).
     const ancla = inst.entrada!.pos;
-    const v0 = camA.pos.clone().sub(ancla);
-    const v1 = camera.position.clone().sub(ancla);
+    const v0 = relayCamera.v0.copy(camA.pos).sub(ancla);
+    const v1 = relayCamera.v1.copy(camera.position).sub(ancla);
     const l0 = Math.max(v0.length(), 1e-9);
     const l1 = Math.max(v1.length(), 1e-9);
-    const q = new THREE.Quaternion().setFromUnitVectors(v0.clone().divideScalar(l0), v1.clone().divideScalar(l1));
-    const dir = v0.clone().divideScalar(l0).applyQuaternion(new THREE.Quaternion().slerp(q, k));
+    const q = relayCamera.turn.setFromUnitVectors(relayCamera.n0.copy(v0).divideScalar(l0), relayCamera.n1.copy(v1).divideScalar(l1));
+    const dir = relayCamera.dir.copy(v0).divideScalar(l0).applyQuaternion(relayCamera.partial.identity().slerp(q, k));
     camera.position.copy(ancla).addScaledVector(dir, Math.exp(Math.log(l0) + (Math.log(l1) - Math.log(l0)) * k));
     // Orientation: the same turn as the position (so the anchor stays where it was on the screen),
     // plus the roll that is left between the two views, spread over the relay.
-    const qB = camera.quaternion.clone();
-    const twist = q.clone().multiply(camA.quat).invert().multiply(qB);
-    camera.quaternion.copy(new THREE.Quaternion().slerp(q, k).multiply(camA.quat).multiply(new THREE.Quaternion().slerp(twist, k)));
+    const qB = relayCamera.qB.copy(camera.quaternion);
+    const twist = relayCamera.twist.copy(q).multiply(camA.quat).invert().multiply(qB);
+    camera.quaternion.copy(relayCamera.partial.identity().slerp(q, k).multiply(camA.quat).multiply(relayCamera.roll.identity().slerp(twist, k)));
     camera.fov = camA.fov + (camera.fov - camA.fov) * k;
     // The light: the last act's fades as this one's comes up (they add, so the sum holds).
     const c = smooth(clamp((p - 0.05) / (RELEVO * 0.8), 0, 1));

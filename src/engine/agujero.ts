@@ -198,6 +198,7 @@ export function crearAgujero() {
   );
   mesh.frustumCulled = false;
   mesh.renderOrder = -30;
+  const cameraRotation = new THREE.Matrix3();
   return {
     mesh,
     u,
@@ -209,7 +210,7 @@ export function crearAgujero() {
       u.uBH.value.copy(f.center).applyMatrix4(f.camera.matrixWorldInverse);
       u.uN.value.copy(f.normal).transformDirection(f.camera.matrixWorldInverse);
       u.uRs.value = f.rs;
-      u.uSky.value.copy(f.sky).multiply(new THREE.Matrix3().setFromMatrix4(f.camera.matrixWorld));
+      u.uSky.value.copy(f.sky).multiply(cameraRotation.setFromMatrix4(f.camera.matrixWorld));
       u.uTime.value = f.time;
       u.uAlpha.value = f.alpha;
       mesh.visible = f.alpha > 0.002;

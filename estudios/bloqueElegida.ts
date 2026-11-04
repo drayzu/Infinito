@@ -246,6 +246,14 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
   };
 
   const tmp = V();
+  const movingMatter = [helice, solCol];
+  // Camera poses keep their vectors; each update writes the same coordinates into them.
+  const poses: [THREE.Vector3, THREE.Vector3, THREE.Vector3, string | null][] = [
+    [V(), V(), V(), null], [V(), V(), V(), 'c0'], [V(), V(), V(), 'c1'],
+    [V(), V(), V(), 'c2'], [V(), V(), V(), 'c3'], [V(), V(), V(), 'c4'],
+    [V(), V(), V(), 'c5'], [V(), V(), V(), 'c6'],
+  ];
+  const cameraScratch = { earth: V(), offset: V(), pos: V(), look: V(), up: V() };
   return {
     tl,
     entrada: { pos: V(0, -0.15 * PITCH, 0), escala: 1.6 },
@@ -263,7 +271,7 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
       const E = tl.get('E', p);
       const todo = tl.get('todo', p);
       const hl = tl.get('hel', p);
-      for (const n of [helice, solCol]) {
+      for (const n of movingMatter) {
         n.u.uAhora.value = ahora;
         n.u.uBloque.value = tl.get('bq', p);
         n.u.uTodo.value = todo;
@@ -276,7 +284,7 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
       estrellas.u.uOn.value = ease(0.5, 1, tl.get('c5', p)) * 1.6 * (1 - ease(0, 0.7, apaga));
       helice.u.uHel.value = hl * (1 - ease(0.2, 0.9, apaga));
       solCol.u.uHel.value = hl * (1 - ease(0.2, 0.9, apaga));
-      tierra.points.position.copy(hel(ahora, E));
+      hel(ahora, E, tierra.points.position);
       tierra.u.uGain.value = Math.max((1 - todo) * lerp(1, 0.25, ease(0.3, 1, 1 - hl)), ease(0.3, 1, apaga) * 1.4);
       cuadros.u.uCuadro.value = ahora * POR_ANO + K0;
       cuadros.u.uLado.value = tl.get('lado', p);
@@ -296,23 +304,30 @@ export function montarElegida(stage: Stage, viaje = false): Instancia {
       const a = 0.5 + f.time * 0.01;
       const yN = ahora * PITCH * E;
       const yV = ((NACE + MUERE) / 2) * PITCH * E;
-      const tierraAhora = hel(ahora, E);
-      const poses: [THREE.Vector3, THREE.Vector3, THREE.Vector3, string | null][] = [
-        [V(Math.sin(a) * 16, yN + 4, Math.cos(a) * 16), V(0, yN, 0), V(0, 1, 0), null],
-        [V(Math.sin(a) * 3.4, yN + 1.6, Math.cos(a) * 3.4), V(0, yN, 0), V(0, 1, 0), 'c0'],
-        [V(Math.sin(a + 0.9) * 14, yN + 2, Math.cos(a + 0.9) * 14), V(0, yN, 0), V(0, 1, 0), 'c1'],
-        // Below the now, looking up the time axis: the frames ahead are the future.
-        [V(0.12, yN - 2.9, 0.08), V(0, yN + 1, 0), V(0, 0, -1), 'c2'],
-        // The block from the side, rolled so that time runs left to right.
-        [V(Math.sin(0.3) * 21, yMid + 1.5, Math.cos(0.3) * 21), V(0, yMid, 0), V(-1, 0.32, 0.2).normalize(), 'c3'],
-        [V(Math.sin(a + 0.9) * 26, yV + 3, Math.cos(a + 0.9) * 26), V(0, yV, 0), V(0, 1, 0), 'c4'],
-        [V(Math.sin(a + 0.9) * 58, yV + 8, Math.cos(a + 0.9) * 58), V(0, yV, 0), V(0, 1, 0), 'c5'],
-        [tierraAhora.clone().add(V(Math.sin(a + 0.9) * 2.2, 0.4, Math.cos(a + 0.9) * 2.2)), tierraAhora.clone(), V(0, 1, 0), 'c6'],
-      ];
-      const pos = poses[0][0].clone();
-      const look = poses[0][1].clone();
-      const up = poses[0][2].clone();
-      for (const [P, L, U, k] of poses.slice(1)) {
+      const tierraAhora = hel(ahora, E, cameraScratch.earth);
+      poses[0][0].set(Math.sin(a) * 16, yN + 4, Math.cos(a) * 16);
+      poses[0][1].set(0, yN, 0); poses[0][2].set(0, 1, 0);
+      poses[1][0].set(Math.sin(a) * 3.4, yN + 1.6, Math.cos(a) * 3.4);
+      poses[1][1].set(0, yN, 0); poses[1][2].set(0, 1, 0);
+      poses[2][0].set(Math.sin(a + 0.9) * 14, yN + 2, Math.cos(a + 0.9) * 14);
+      poses[2][1].set(0, yN, 0); poses[2][2].set(0, 1, 0);
+      // Below the now, looking up the time axis: the frames ahead are the future.
+      poses[3][0].set(0.12, yN - 2.9, 0.08);
+      poses[3][1].set(0, yN + 1, 0); poses[3][2].set(0, 0, -1);
+      // The block from the side, rolled so that time runs left to right.
+      poses[4][0].set(Math.sin(0.3) * 21, yMid + 1.5, Math.cos(0.3) * 21);
+      poses[4][1].set(0, yMid, 0); poses[4][2].set(-1, 0.32, 0.2).normalize();
+      poses[5][0].set(Math.sin(a + 0.9) * 26, yV + 3, Math.cos(a + 0.9) * 26);
+      poses[5][1].set(0, yV, 0); poses[5][2].set(0, 1, 0);
+      poses[6][0].set(Math.sin(a + 0.9) * 58, yV + 8, Math.cos(a + 0.9) * 58);
+      poses[6][1].set(0, yV, 0); poses[6][2].set(0, 1, 0);
+      poses[7][0].copy(tierraAhora).add(cameraScratch.offset.set(Math.sin(a + 0.9) * 2.2, 0.4, Math.cos(a + 0.9) * 2.2));
+      poses[7][1].copy(tierraAhora); poses[7][2].set(0, 1, 0);
+      const pos = cameraScratch.pos.copy(poses[0][0]);
+      const look = cameraScratch.look.copy(poses[0][1]);
+      const up = cameraScratch.up.copy(poses[0][2]);
+      for (let i = 1; i < poses.length; i++) {
+        const [P, L, U, k] = poses[i];
         const w = ease(0, 1, tl.get(k!, p));
         pos.lerp(P, w);
         look.lerp(L, w);

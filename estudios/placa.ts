@@ -94,7 +94,50 @@ export function torre(g: CanvasRenderingContext2D, x: number, y: number, floors:
   return cx - x;
 }
 
+const MAX_TEXT_LAYOUTS = 128;
+const towerWidths = new Map<string, number>();
+let measuringContext: CanvasRenderingContext2D | undefined;
+let textLayouts = new WeakMap<CanvasRenderingContext2D, Map<string, string[]>>();
+const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
+if (fonts) {
+  const clearLayouts = () => {
+    towerWidths.clear();
+    textLayouts = new WeakMap();
+  };
+  fonts.addEventListener('loading', clearLayouts);
+  fonts.addEventListener('loadingdone', clearLayouts);
+  fonts.addEventListener('loadingerror', clearLayouts);
+}
+
+/** Measures unchanged towers once, keeping the auxiliary canvas out of the frame loop. */
+function towerWidth(floors: string[], px: number) {
+  const cacheable = !fonts || fonts.status === 'loaded';
+  const key = JSON.stringify([floors, px, fonts?.size]);
+  const cached = cacheable ? towerWidths.get(key) : undefined;
+  if (cached !== undefined) return cached;
+  const m = (measuringContext ??= document.createElement('canvas').getContext('2d')!);
+  const width = torre(m, 0, 0, floors, px);
+  if (cacheable && (!fonts || fonts.status === 'loaded')) {
+    if (towerWidths.size >= MAX_TEXT_LAYOUTS) towerWidths.delete(towerWidths.keys().next().value!);
+    towerWidths.set(key, width);
+  }
+  return width;
+}
+
 export function wrap(g: CanvasRenderingContext2D, text: string, maxW: number) {
+  // Font loading can change widths without changing g.font; never keep fallback layouts.
+  const cacheable = !fonts || fonts.status === 'loaded';
+  const key = cacheable ? JSON.stringify([
+    text, maxW, g.font, g.letterSpacing, g.wordSpacing, g.direction,
+    g.fontKerning, g.fontStretch, g.fontVariantCaps, g.textRendering, fonts?.size,
+  ]) : '';
+  let cache = cacheable ? textLayouts.get(g) : undefined;
+  if (cacheable && !cache) {
+    cache = new Map();
+    textLayouts.set(g, cache);
+  }
+  const cached = cache?.get(key);
+  if (cached) return cached;
   const words = text.split(' ');
   const lines: string[] = [];
   let line = '';
@@ -106,6 +149,10 @@ export function wrap(g: CanvasRenderingContext2D, text: string, maxW: number) {
     } else line = test;
   }
   if (line) lines.push(line);
+  if (cache && (!fonts || fonts.status === 'loaded')) {
+    if (cache.size >= MAX_TEXT_LAYOUTS) cache.delete(cache.keys().next().value!);
+    cache.set(key, lines);
+  }
   return lines;
 }
 
@@ -164,8 +211,7 @@ export function cifra(g: CanvasRenderingContext2D, u: number, x: number, y: numb
   g.shadowBlur = 14 * u;
   g.textBaseline = 'alphabetic';
   // Measure, then draw centred.
-  const m = document.createElement('canvas').getContext('2d')!;
-  const w = torre(m, 0, 0, floors, px * u);
+  const w = towerWidth(floors, px * u);
   torre(g, x - w / 2, y, floors, px * u, color);
   if (under) {
     g.font = FONT.mono(10.5 * u);
@@ -298,8 +344,7 @@ export function escalera(g: CanvasRenderingContext2D, u: number, W: number, H: n
     g.stroke();
     const near = 1 - smoothstep(0.6, 1.6, Math.abs(i + 1 - h));
     g.globalAlpha = alpha * (0.3 + 0.45 * near);
-    const m = document.createElement('canvas').getContext('2d')!;
-    const w = torre(m, 0, 0, f, 13 * u);
+    const w = towerWidth(f, 13 * u);
     torre(g, x - 16 * u - w, yy + 4 * u, f, 13 * u, ink(0.9));
     g.globalAlpha = alpha;
   }
