@@ -18,6 +18,7 @@ import { simulacion } from '../estudios/simulacion';
 import { boltzmann } from '../estudios/boltzmann';
 import { fractal } from '../estudios/fractal';
 import { final } from '../estudios/final';
+import { crearMarco } from './marco/marco';
 
 /**
  * Infinito, phase 1: the journey. One scroll through the ways Diego chose in phase 0, in the order of
@@ -155,9 +156,20 @@ const frozen: number | null = params.has('ver') ? Number(params.get('ver')) : nu
 scrollTo(0, P * PX_PER_BEAT);
 addEventListener('scroll', () => (target = clamp(scrollY / PX_PER_BEAT, 0, TOTAL)));
 addEventListener('wheel', () => (autoplay = false), { passive: true });
-addEventListener('keydown', (ev) => {
-  if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-  if (ev.key.toLowerCase() === 'a') autoplay = !autoplay;
+// A tap on the frame's buttons is not a scroll (or tapping ▷ could never pause).
+addEventListener('touchstart', (ev) => !(ev.target as Element | null)?.closest?.('.marco-barra, .marco-fin, .marco-mapa') && (autoplay = false), { passive: true });
+// The series' frame: its buttons and keys (A; the plate, the sound and English come later).
+const marco = crearMarco({
+  obra: 'infinito',
+  acciones: {
+    play: () => {
+      if (!autoplay && target >= TOTAL - 0.05) {
+        scrollTo(0, 0);
+        target = 0;
+      }
+      autoplay = !autoplay;
+    },
+  },
 });
 const mouse = new THREE.Vector2();
 const mouseTarget = new THREE.Vector2();
@@ -348,20 +360,16 @@ function step(now: number, dt: number, at: number) {
   g.save();
   g.globalAlpha = vis;
   inst.placa?.(g, f);
-  // The brand, top left.
-  g.textBaseline = 'alphabetic';
-  g.shadowColor = 'rgba(0,0,0,0.8)';
-  g.shadowBlur = 10 * u;
-  g.font = FONT.serif(27 * u);
-  g.fillStyle = ink();
-  g.fillText('Infinito', 40 * u, 54 * u);
   g.restore();
+  // (The brand, top left, is the frame's.) At the end the closing card is left alone; at rest the
+  // scale steps back with the buttons.
   const c = inst.cuenta(p);
   g.save();
   g.globalAlpha = vis;
-  cuenta(g, u, H, c, inst.rotulo(p));
+  const kf = 1 - marco.final;
+  cuenta(g, u, H, c && { ...c, a: (c.a ?? 1) * kf }, inst.rotulo(p), kf);
   g.restore();
-  if (c && inst.escalera !== false) escalera(g, u, W, H, c.h, (c.a ?? 1) * vis);
+  if (c && inst.escalera !== false) escalera(g, u, W, H, c.h, (c.a ?? 1) * vis * (1 - marco.reposo) * (1 - marco.final));
 }
 
 let last = performance.now();
@@ -384,6 +392,7 @@ function frame(now: number) {
     if (!porCalentar.length) calentarListo();
   }
   step(now, dt, P);
+  marco.update({ p: P / TOTAL, playing: autoplay, inicio: 1 - smooth(clamp((P - 0.05) / 0.55, 0, 1)), fin: P > TOTAL - 0.5 ? 1 : 0 });
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

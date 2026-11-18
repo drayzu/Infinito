@@ -243,6 +243,10 @@ export interface Cuenta {
 }
 
 /** The count at bottom left, with the moment's chapter, name and sentence above it. */
+/** A narrow screen (a phone upright): the scale hugs the right edge without its labels, and the
+ * sentence keeps clear of it. */
+export const angosto = (W: number, u: number) => W / u < 900;
+
 export function cuenta(g: CanvasRenderingContext2D, u: number, H: number, c: Cuenta | null, cap: Rotulo | null, capAlpha = 1) {
   const x = 44 * u;
   g.save();
@@ -263,7 +267,7 @@ export function cuenta(g: CanvasRenderingContext2D, u: number, H: number, c: Cue
     g.fillText(cap.name, x, H - 236 * u);
     g.font = FONT.sans(14 * u);
     g.fillStyle = ink(0.62);
-    wrap(g, cap.fact, 470 * u).forEach((line, i) => g.fillText(line, x, H - 208 * u + i * 20 * u));
+    wrap(g, cap.fact, angosto(g.canvas.width, u) ? g.canvas.width - x - 44 * u : 470 * u).forEach((line, i) => g.fillText(line, x, H - 208 * u + i * 20 * u));
     g.globalAlpha = 1;
   }
   if (c && (c.a ?? 1) > 0.01) {
@@ -308,7 +312,8 @@ const HCUT = 5.35;
 /** The ladder at the right edge, filled in violet up to `h`. */
 export function escalera(g: CanvasRenderingContext2D, u: number, W: number, H: number, h: number, alpha = 1) {
   if (alpha <= 0.01) return;
-  const x = W - 64 * u;
+  const chico = angosto(W, u);
+  const x = chico ? W - 20 * u : W - 64 * u;
   const y0 = H - 70 * u;
   const y1 = 86 * u;
   const yOf = (v: number) => y0 + ((v - H0) / (HTOP - H0)) * (y1 - y0);
@@ -342,6 +347,7 @@ export function escalera(g: CanvasRenderingContext2D, u: number, W: number, H: n
     g.moveTo(x - 9 * u, yy);
     g.lineTo(x, yy);
     g.stroke();
+    if (chico) continue;
     const near = 1 - smoothstep(0.6, 1.6, Math.abs(i + 1 - h));
     g.globalAlpha = alpha * (0.3 + 0.45 * near);
     const w = towerWidth(f, 13 * u);
@@ -364,7 +370,7 @@ export function escalera(g: CanvasRenderingContext2D, u: number, W: number, H: n
   for (const r of [cerca]) {
     const yy = yOf(r.h);
     const a = 0.75 * (1 - smoothstep(0.15, 0.55, Math.abs(r.h - h)));
-    if (a < 0.02) continue;
+    if (a < 0.02 || chico) continue;
     g.globalAlpha = alpha * a;
     g.fillStyle = r.h <= h + 1e-3 ? VIOLETA : ink(1);
     g.fillRect(x + 4 * u, yy - 0.5 * u, 6 * u, Math.max(1, u));
